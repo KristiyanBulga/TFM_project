@@ -1,0 +1,469 @@
+{
+    "restaurants": {
+        "kind": "customsearch#search",
+        "url": {
+            "type": "application/json",
+            "template": "https://www.googleapis.com/customsearch/v1?q={searchTerms}&num={count?}&start={startIndex?}&lr={language?}&safe={safe?}&cx={cx?}&sort={sort?}&filter={filter?}&gl={gl?}&cr={cr?}&googlehost={googleHost?}&c2coff={disableCnTwTranslation?}&hq={hq?}&hl={hl?}&siteSearch={siteSearch?}&siteSearchFilter={siteSearchFilter?}&exactTerms={exactTerms?}&excludeTerms={excludeTerms?}&linkSite={linkSite?}&orTerms={orTerms?}&relatedSite={relatedSite?}&dateRestrict={dateRestrict?}&lowRange={lowRange?}&highRange={highRange?}&searchType={searchType}&fileType={fileType?}&rights={rights?}&imgSize={imgSize?}&imgType={imgType?}&imgColorType={imgColorType?}&imgDominantColor={imgDominantColor?}&alt=json"
+        },
+        "queries": {
+            "request": [
+                {
+                    "title": "Google Custom Search - Restaurante L'arruzz Albacete",
+                    "totalResults": "7010",
+                    "searchTerms": "Restaurante L'arruzz Albacete",
+                    "count": 10,
+                    "startIndex": 1,
+                    "inputEncoding": "utf8",
+                    "outputEncoding": "utf8",
+                    "safe": "off",
+                    "cx": "2263ce8b8432d4ea6"
+                }
+            ],
+            "nextPage": [
+                {
+                    "title": "Google Custom Search - Restaurante L'arruzz Albacete",
+                    "totalResults": "7010",
+                    "searchTerms": "Restaurante L'arruzz Albacete",
+                    "count": 10,
+                    "startIndex": 11,
+                    "inputEncoding": "utf8",
+                    "outputEncoding": "utf8",
+                    "safe": "off",
+                    "cx": "2263ce8b8432d4ea6"
+                }
+            ]
+        },
+        "context": {
+            "title": "TMFbuscador"
+        },
+        "searchInformation": {
+            "searchTime": 0.416903,
+            "formattedSearchTime": "0.42",
+            "totalResults": "7010",
+            "formattedTotalResults": "7,010"
+        },
+        "items": [
+            {
+                "kind": "customsearch#result",
+                "title": "Restaurante L'arruzz Albacete",
+                "htmlTitle": "<b>Restaurante L&#39;arruzz Albacete</b>",
+                "link": "https://www.larruzzalbacete.com/",
+                "displayLink": "www.larruzzalbacete.com",
+                "snippet": "L'arruzz es uno de los mejores restaurantes especializados en Arroces y Tapas de Albacete. El personal, atento, simp\u00e1tico y amable hace que la comida sepa\u00a0...",
+                "htmlSnippet": "<b>L&#39;arruzz</b> es uno de los mejores <b>restaurantes</b> especializados en Arroces y Tapas de <b>Albacete</b>. El personal, atento, simp\u00e1tico y amable hace que la comida sepa&nbsp;...",
+                "cacheId": "hwt7fblERU0J",
+                "formattedUrl": "https://www.larruzzalbacete.com/",
+                "htmlFormattedUrl": "https://www.l<b>arruzzalbacete</b>.com/",
+                "pagemap": {
+                    "cse_thumbnail": [
+                        {
+                            "src": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRcSHcIi8rf2UK8MEt30AMrlM_W3t7DxFJIiF0T0vfdqRfDGXzv_YK1IA",
+                            "width": "295",
+                            "height": "83"
+                        }
+                    ],
+                    "metatags": [
+                        {
+                            "og:image": "https://www.larruzzalbacete.com/wp-content/uploads/2018/10/2018-10-02.png",
+                            "og:type": "website",
+                            "twitter:card": "summary_large_image",
+                            "twitter:title": "Restaurante L'arruzz Albacete",
+                            "og:site_name": "L'arruzz Albacete",
+                            "tec-api-origin": "https://www.larruzzalbacete.com",
+                            "og:title": "Restaurante L'arruzz Albacete",
+                            "og:description": "L\u2019arruzz es uno de los mejores restaurantes especializados en Arroces y Tapas de Albacete. El personal, atento, simp\u00e1tico y amable hace que la comida sepa a\u00fan m\u00e1s rica.",
+                            "twitter:creator": "@larruzzalbacete",
+                            "twitter:site": "@larruzzalbacete",
+                            "viewport": "width=device-width, initial-scale=1",
+                            "twitter:description": "L\u2019arruzz es uno de los mejores restaurantes especializados en Arroces y Tapas de Albacete. El personal, atento, simp\u00e1tico y amable hace que la comida sepa a\u00fan m\u00e1s rica.",
+                            "og:locale": "es_ES",
+                            "og:url": "https://www.larruzzalbacete.com/",
+                            "tec-api-version": "v1"
+                        }
+                    ],
+                    "cse_image": [
+                        {
+                            "src": "https://www.larruzzalbacete.com/wp-content/uploads/2018/10/2018-10-02.png"
+                        }
+                    ],
+                    "hatomfeed": [
+                        {}
+                    ]
+                }
+            },
+            {
+                "kind": "customsearch#result",
+                "title": "L'Arruzz Albacete in Albacete - Restaurant Reviews, Menu and ...",
+                "htmlTitle": "<b>L&#39;Arruzz Albacete</b> in <b>Albacete</b> - Restaurant Reviews, Menu and ...",
+                "link": "https://www.thefork.com/restaurant/l-arruzz-albacete-r15544",
+                "displayLink": "www.thefork.com",
+                "snippet": "Make a booking at L'Arruzz Albacete in Albacete. Find diner reviews, menus, prices, and opening hours for L'Arruzz Albacete on TheFork.",
+                "htmlSnippet": "Make a booking at <b>L&#39;Arruzz Albacete</b> in <b>Albacete</b>. Find diner reviews, menus, prices, and opening hours for <b>L&#39;Arruzz Albacete</b> on TheFork.",
+                "cacheId": "Ak0oo2bBCZMJ",
+                "formattedUrl": "https://www.thefork.com/restaurant/l-arruzz-albacete-r15544",
+                "htmlFormattedUrl": "https://www.thefork.com/restaurant/l-<b>arruzz</b>-<b>albacete</b>-r15544",
+                "pagemap": {
+                    "metatags": [
+                        {
+                            "msapplication-tilecolor": "#589442",
+                            "theme-color": "#589442",
+                            "msapplication-tap-highlight": "no",
+                            "viewport": "width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no",
+                            "apple-mobile-web-app-capable": "yes"
+                        }
+                    ]
+                }
+            },
+            {
+                "kind": "customsearch#result",
+                "title": "Restaurante L'arruzz Albacete on Instagram \u2022 Photos and Videos",
+                "htmlTitle": "<b>Restaurante L&#39;arruzz Albacete</b> on Instagram \u2022 Photos and Videos",
+                "link": "https://www.instagram.com/explore/locations/218605255/restaurante-larruzz-albacete/",
+                "displayLink": "www.instagram.com",
+                "snippet": "244 Posts - See Instagram photos and videos taken at 'Restaurante L'arruzz Albacete'",
+                "htmlSnippet": "244 Posts - See Instagram photos and videos taken at &#39;<b>Restaurante L&#39;arruzz Albacete</b>&#39;",
+                "formattedUrl": "https://www.instagram.com/explore/locations/.../restaurante-larruzz-albacete/",
+                "htmlFormattedUrl": "https://www.instagram.com/explore/locations/.../<b>restaurante</b>-l<b>arruzz</b>-<b>albacete</b>/",
+                "pagemap": {
+                    "metatags": [
+                        {
+                            "place:location:longitude": "-1.8526951",
+                            "og:image": "https://scontent-atl3-1.cdninstagram.com/v/t51.2885-15/283954627_2796678410628243_3242763870111257348_n.webp?stp=c0.135.1080.1080a_dst-jpg_e35_s640x640_sh0.08&_nc_ht=scontent-atl3-1.cdninstagram.com&_nc_cat=103&_nc_ohc=yA9ZyrlIkSYAX9X0fDg&edm=AFoqvFcBAAAA&ccb=7-5&ig_cache_key=Mjg0NzU1NzYzODgwNjMwOTk0OA%3D%3D.2.c-ccb7-5&oh=00_AfC0QMP4HxCb1D6uS4xDJJgzUEAwqfqjNFG3wTsaJvD_TA&oe=6364744A&_nc_sid=c3f888",
+                            "theme-color": "#ffffff",
+                            "og:type": "place",
+                            "apple-mobile-web-app-status-bar-style": "default",
+                            "viewport": "width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover",
+                            "place:location:latitude": "38.9928971",
+                            "og:title": "Restaurante L'arruzz Albacete on Instagram \u2022 Photos and Videos",
+                            "mobile-web-app-capable": "yes",
+                            "og:url": "https://www.instagram.com/explore/locations/218605255/",
+                            "og:description": "244 Posts - See Instagram photos and videos taken at \u2018Restaurante L'arruzz Albacete\u2019"
+                        }
+                    ],
+                    "cse_image": [
+                        {
+                            "src": "https://scontent-atl3-1.cdninstagram.com/v/t51.2885-15/283954627_2796678410628243_3242763870111257348_n.webp?stp=c0.135.1080.1080a_dst-jpg_e35_s640x640_sh0.08&_nc_ht=scontent-atl3-1.cdninstagram.com&_nc_cat=103&_nc_ohc=yA9ZyrlIkSYAX9X0fDg&edm=AFoqvFcBAAAA&ccb=7-5&ig_cache_key=Mjg0NzU1NzYzODgwNjMwOTk0OA%3D%3D.2.c-ccb7-5&oh=00_AfC0QMP4HxCb1D6uS4xDJJgzUEAwqfqjNFG3wTsaJvD_TA&oe=6364744A&_nc_sid=c3f888"
+                        }
+                    ]
+                }
+            },
+            {
+                "kind": "customsearch#result",
+                "title": "RESTAURANTE L'ARRUZZ ALBACETE - Men\u00fa, Precios y ...",
+                "htmlTitle": "<b>RESTAURANTE L&#39;ARRUZZ ALBACETE</b> - Men\u00fa, Precios y ...",
+                "link": "https://www.tripadvisor.es/Restaurant_Review-g187486-d2714908-Reviews-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html",
+                "displayLink": "www.tripadvisor.es",
+                "snippet": "Restaurante L'arruzz Albacete ; Tipos de cocina. Mediterr\u00e1nea, Europea, Espa\u00f1ola ; Dietas especiales. Opciones vegetarianas, Opciones veganas, Opciones sin gluten.",
+                "htmlSnippet": "<b>Restaurante L&#39;arruzz Albacete</b> ; Tipos de cocina. Mediterr\u00e1nea, Europea, Espa\u00f1ola ; Dietas especiales. Opciones vegetarianas, Opciones veganas, Opciones sin gluten.",
+                "formattedUrl": "https://www.tripadvisor.es/Restaurant_Review-g187486-d2714908-Reviews- L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html",
+                "htmlFormattedUrl": "https://www.tripadvisor.es/Restaurant_Review-g187486-d2714908-Reviews- L_<b>arruzz</b>-<b>Albacete</b>_Province_of_<b>Albacete</b>_Castile_La_Mancha.html",
+                "pagemap": {
+                    "cse_thumbnail": [
+                        {
+                            "src": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRF-UtUP9xWI77rn-Rm2nmDXkfrAKc1k6eiOIX7cO2b6urE_JJwkkVA0gEX",
+                            "width": "275",
+                            "height": "183"
+                        }
+                    ],
+                    "metatags": [
+                        {
+                            "twitter:app:url:iphone": "tripadvisor://www.tripadvisor.es/Restaurant_Review-g187486-d2714908-Reviews-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:image": "https://media-cdn.tripadvisor.com/media/photo-s/16/9f/d0/ca/carta-19.jpg",
+                            "apple-itunes-app": "app-id=284876795",
+                            "theme-color": "#34e0a1",
+                            "og:image:width": "550",
+                            "og:type": "restaurant",
+                            "og:site_name": "Tripadvisor",
+                            "al:ios:app_name": "TripAdvisor",
+                            "twitter:app:url:ipad": "tripadvisor://www.tripadvisor.es/Restaurant_Review-g187486-d2714908-Reviews-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:title": "RESTAURANTE L'ARRUZZ ALBACETE - Men\u00fa, Precios y Restaurante Opiniones - Tripadvisor",
+                            "twitter:app:id:ipad": "284876795",
+                            "og:image:height": "367",
+                            "twitter:app:id:iphone": "284876795",
+                            "al:ios:url": "tripadvisor://www.tripadvisor.es/Restaurant_Review-g187486-d2714908-Reviews-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:description": "Reserva Restaurante L'arruzz Albacete, Albacete en Tripadvisor: Consulta 512 opiniones sobre Restaurante L'arruzz Albacete con puntuaci\u00f3n 4,5 de 5 y clasificado en Tripadvisor N.\u00b012 de 417 restaurantes en Albacete.",
+                            "fb:pages": "49384775926",
+                            "al:ios:app_store_id": "284876795",
+                            "twitter:image": "https://static.tacdn.com/img2/brand_refresh/application_icons/post-image-550x550.png",
+                            "fb:app_id": "162729813767876",
+                            "viewport": "width=device-width, initial-scale=1.0, user-scalable=no",
+                            "fb:admins": "100000982334629",
+                            "og:url": "http://www.tripadvisor.es/Restaurant_Review-g187486-d2714908-Reviews-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html",
+                            "format-detection": "telephone=no"
+                        }
+                    ],
+                    "cse_image": [
+                        {
+                            "src": "https://media-cdn.tripadvisor.com/media/photo-s/16/9f/d0/ca/carta-19.jpg"
+                        }
+                    ]
+                }
+            },
+            {
+                "kind": "customsearch#result",
+                "title": "L'ARRUZZ, Albacete - Menu, Prices, Restaurant Reviews ...",
+                "htmlTitle": "<b>L&#39;ARRUZZ</b>, <b>Albacete</b> - Menu, Prices, Restaurant Reviews ...",
+                "link": "https://www.tripadvisor.com/Restaurant_Review-g187486-d2714908-Reviews-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html",
+                "displayLink": "www.tripadvisor.com",
+                "snippet": "Reserve a table at L'arruzz, Albacete on Tripadvisor: See 509 unbiased reviews of L'arruzz, rated 4.5 of 5 on Tripadvisor and ranked #11 of 415 restaurants\u00a0...",
+                "htmlSnippet": "Reserve a table at <b>L&#39;arruzz</b>, <b>Albacete</b> on Tripadvisor: See 509 unbiased reviews of <b>L&#39;arruzz</b>, rated 4.5 of 5 on Tripadvisor and ranked #11 of 415 restaurants&nbsp;...",
+                "formattedUrl": "https://www.tripadvisor.com/Restaurant_Review-g187486-d2714908- Reviews-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html",
+                "htmlFormattedUrl": "https://www.tripadvisor.com/Restaurant_Review-g187486-d2714908- Reviews-L_<b>arruzz</b>-<b>Albacete</b>_Province_of_<b>Albacete</b>_Castile_La_Mancha.html",
+                "pagemap": {
+                    "cse_thumbnail": [
+                        {
+                            "src": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRF-UtUP9xWI77rn-Rm2nmDXkfrAKc1k6eiOIX7cO2b6urE_JJwkkVA0gEX",
+                            "width": "275",
+                            "height": "183"
+                        }
+                    ],
+                    "metatags": [
+                        {
+                            "twitter:app:url:iphone": "tripadvisor://www.tripadvisor.com/Restaurant_Review-g187486-d2714908-Reviews-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:image": "https://media-cdn.tripadvisor.com/media/photo-s/16/9f/d0/ca/carta-19.jpg",
+                            "apple-itunes-app": "app-id=284876795",
+                            "theme-color": "#34e0a1",
+                            "og:image:width": "550",
+                            "og:type": "restaurant",
+                            "og:site_name": "Tripadvisor",
+                            "al:ios:app_name": "TripAdvisor",
+                            "twitter:app:url:ipad": "tripadvisor://www.tripadvisor.com/Restaurant_Review-g187486-d2714908-Reviews-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:title": "L'ARRUZZ, Albacete - Menu, Prices, Restaurant Reviews & Reservations - Tripadvisor",
+                            "twitter:app:id:ipad": "284876795",
+                            "og:image:height": "367",
+                            "twitter:app:id:iphone": "284876795",
+                            "al:ios:url": "tripadvisor://www.tripadvisor.com/Restaurant_Review-g187486-d2714908-Reviews-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:description": "Reserve a table at L'arruzz, Albacete on Tripadvisor: See 509 unbiased reviews of L'arruzz, rated 4.5 of 5 on Tripadvisor and ranked #11 of 415 restaurants in Albacete.",
+                            "fb:pages": "5863091683",
+                            "al:ios:app_store_id": "284876795",
+                            "twitter:image": "https://static.tacdn.com/img2/brand_refresh/application_icons/post-image-550x550.png",
+                            "fb:app_id": "162729813767876",
+                            "viewport": "width=device-width, initial-scale=1.0, user-scalable=no",
+                            "fb:admins": "100000982334629",
+                            "og:url": "http://www.tripadvisor.com/Restaurant_Review-g187486-d2714908-Reviews-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html",
+                            "format-detection": "telephone=no"
+                        }
+                    ],
+                    "cse_image": [
+                        {
+                            "src": "https://media-cdn.tripadvisor.com/media/photo-s/16/9f/d0/ca/carta-19.jpg"
+                        }
+                    ]
+                }
+            },
+            {
+                "kind": "customsearch#result",
+                "title": "Restaurante L'arruzz Albacete",
+                "htmlTitle": "<b>Restaurante L&#39;arruzz Albacete</b>",
+                "link": "https://www.facebook.com/LarruzzAlbacete/",
+                "displayLink": "www.facebook.com",
+                "snippet": "Restaurante L'arruzz Albacete, Albacete. 3.045 Me gusta \u00b7 2 personas est\u00e1n hablando de esto \u00b7 1.008 personas estuvieron aqu\u00ed. Especialistas en Arroces....",
+                "htmlSnippet": "<b>Restaurante L&#39;arruzz Albacete</b>, Albacete. 3.045 Me gusta \u00b7 2 personas est\u00e1n hablando de esto \u00b7 1.008 personas estuvieron aqu\u00ed. Especialistas en Arroces....",
+                "formattedUrl": "https://www.facebook.com/LarruzzAlbacete/",
+                "htmlFormattedUrl": "https://www.facebook.com/L<b>arruzzAlbacete</b>/",
+                "pagemap": {
+                    "cse_thumbnail": [
+                        {
+                            "src": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcS5FoL2BSfjoUf9O4djk21cBBMibR-4hNrgcm_hEhYURzjSs4RY5HZKB_M2",
+                            "width": "225",
+                            "height": "225"
+                        }
+                    ],
+                    "metatags": [
+                        {
+                            "apple-itunes-app": "app-id=284882215, app-argument=fb://profile/100064203691982",
+                            "og:image": "https://lookaside.fbsbx.com/lookaside/crawler/media/?media_id=100064203691982",
+                            "og:image:alt": "Restaurante L'arruzz Albacete",
+                            "twitter:card": "summary",
+                            "twitter:title": "Restaurante L'arruzz Albacete",
+                            "al:ios:app_name": "Facebook",
+                            "og:title": "Restaurante L'arruzz Albacete",
+                            "al:android:package": "com.facebook.katana",
+                            "al:ios:url": "fb://profile/100064203691982",
+                            "og:description": "Restaurante L'arruzz Albacete, Albacete. 3.045 Me gusta \u00b7 2 personas est\u00e1n hablando de esto \u00b7 1.008 personas estuvieron aqu\u00ed. Especialistas en Arroces. Disfruta ahora de las mejores tapas creativas a...",
+                            "al:ios:app_store_id": "284882215",
+                            "twitter:image": "https://lookaside.fbsbx.com/lookaside/crawler/media/?media_id=100064203691982",
+                            "al:android:url": "fb://profile/100064203691982",
+                            "referrer": "origin-when-crossorigin",
+                            "twitter:image:alt": "Restaurante L'arruzz Albacete",
+                            "viewport": "user-scalable=no,initial-scale=1,maximum-scale=1",
+                            "twitter:description": "Restaurante L'arruzz Albacete, Albacete. 3.045 Me gusta \u00b7 2 personas est\u00e1n hablando de esto \u00b7 1.008 personas estuvieron aqu\u00ed. Especialistas en Arroces. Disfruta ahora de las mejores tapas creativas a...",
+                            "og:locale": "es_LA",
+                            "og:url": "https://es-la.facebook.com/LarruzzAlbacete/",
+                            "al:android:app_name": "Facebook"
+                        }
+                    ],
+                    "cse_image": [
+                        {
+                            "src": "https://lookaside.fbsbx.com/lookaside/crawler/media/?media_id=100064203691982"
+                        }
+                    ]
+                }
+            },
+            {
+                "kind": "customsearch#result",
+                "title": "Very good paella - Review of L'arruzz, Albacete, Spain - Tripadvisor",
+                "htmlTitle": "Very good paella - Review of <b>L&#39;arruzz</b>, <b>Albacete</b>, Spain - Tripadvisor",
+                "link": "https://www.tripadvisor.com/ShowUserReviews-g187486-d2714908-r608721650-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html",
+                "displayLink": "www.tripadvisor.com",
+                "snippet": "Claim your listing for free to respond to reviews, update your profile and much more. Claim Your Listing. Book similar restaurants. Restaurante Garabato.",
+                "htmlSnippet": "Claim your listing for free to respond to reviews, update your profile and much more. Claim Your Listing. Book similar restaurants. <b>Restaurante</b> Garabato.",
+                "cacheId": "E94lRLuFTXoJ",
+                "formattedUrl": "https://www.tripadvisor.com/ShowUserReviews-g187486-d2714908- r608721650-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Manch...",
+                "htmlFormattedUrl": "https://www.tripadvisor.com/ShowUserReviews-g187486-d2714908- r608721650-L_<b>arruzz</b>-<b>Albacete</b>_Province_of_<b>Albacete</b>_Castile_La_Manch...",
+                "pagemap": {
+                    "cse_thumbnail": [
+                        {
+                            "src": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcQhreUPG-cjimcSeGIrg1_jSuYf7qGe4H-eL86fCetEY6ikpKxX1_Bx82A",
+                            "width": "259",
+                            "height": "194"
+                        }
+                    ],
+                    "metatags": [
+                        {
+                            "og:image": "https://media-cdn.tripadvisor.com/media/photo-s/03/68/40/7b/l-arruzz.jpg",
+                            "twitter:app:url:iphone": "tripadvisor://www.tripadvisor.com/ShowUserReviews-g187486-d2714908-r608721650-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:image:width": "550",
+                            "al:ios:app_name": "TripAdvisor",
+                            "og:title": "Very good paella - Review of L'arruzz, Albacete, Spain - Tripadvisor",
+                            "twitter:app:url:ipad": "tripadvisor://www.tripadvisor.com/ShowUserReviews-g187486-d2714908-r608721650-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:image:height": "412",
+                            "twitter:app:id:ipad": "284876795",
+                            "twitter:app:id:iphone": "284876795",
+                            "al:ios:url": "tripadvisor://www.tripadvisor.com/ShowUserReviews-g187486-d2714908-r608721650-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:description": "L'arruzz: Very good paella - See 508 traveler reviews, 247 candid photos, and great deals for Albacete, Spain, at Tripadvisor.",
+                            "fb:pages": "5863091683",
+                            "al:ios:app_store_id": "284876795"
+                        }
+                    ],
+                    "cse_image": [
+                        {
+                            "src": "https://media-cdn.tripadvisor.com/media/photo-s/03/68/40/7b/l-arruzz.jpg"
+                        }
+                    ]
+                }
+            },
+            {
+                "kind": "customsearch#result",
+                "title": "Restaurante L'arruzz Albacete | Albacete",
+                "htmlTitle": "<b>Restaurante L&#39;arruzz Albacete</b> | Albacete",
+                "link": "https://pt-pt.facebook.com/LarruzzAlbacete/",
+                "displayLink": "pt-pt.facebook.com",
+                "snippet": "Restaurante L'arruzz Albacete, Albacete, 3052 gostos \u00b7 3 falam sobre isto \u00b7 1008 estiveram aqui. Especialistas en Arroces. Disfruta ahora de las mejores...",
+                "htmlSnippet": "<b>Restaurante L&#39;arruzz Albacete</b>, Albacete, 3052 gostos \u00b7 3 falam sobre isto \u00b7 1008 estiveram aqui. Especialistas en Arroces. Disfruta ahora de las mejores...",
+                "formattedUrl": "https://pt-pt.facebook.com/LarruzzAlbacete/",
+                "htmlFormattedUrl": "https://pt-pt.facebook.com/L<b>arruzzAlbacete</b>/",
+                "pagemap": {
+                    "cse_thumbnail": [
+                        {
+                            "src": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcS5FoL2BSfjoUf9O4djk21cBBMibR-4hNrgcm_hEhYURzjSs4RY5HZKB_M2",
+                            "width": "225",
+                            "height": "225"
+                        }
+                    ],
+                    "metatags": [
+                        {
+                            "apple-itunes-app": "app-id=284882215, app-argument=fb://profile/100064203691982",
+                            "og:image": "https://lookaside.fbsbx.com/lookaside/crawler/media/?media_id=100064203691982",
+                            "og:image:alt": "Restaurante L'arruzz Albacete",
+                            "twitter:card": "summary",
+                            "twitter:title": "Restaurante L'arruzz Albacete",
+                            "al:ios:app_name": "Facebook",
+                            "og:title": "Restaurante L'arruzz Albacete",
+                            "al:android:package": "com.facebook.katana",
+                            "al:ios:url": "fb://profile/100064203691982",
+                            "og:description": "Restaurante L'arruzz Albacete, Albacete, 3052 gostos \u00b7 3 falam sobre isto \u00b7 1008 estiveram aqui. Especialistas en Arroces. Disfruta ahora de las mejores tapas creativas a precio asequible e...",
+                            "al:ios:app_store_id": "284882215",
+                            "twitter:image": "https://lookaside.fbsbx.com/lookaside/crawler/media/?media_id=100064203691982",
+                            "al:android:url": "fb://profile/100064203691982",
+                            "referrer": "origin-when-crossorigin",
+                            "twitter:image:alt": "Restaurante L'arruzz Albacete",
+                            "viewport": "user-scalable=no,initial-scale=1,maximum-scale=1",
+                            "twitter:description": "Restaurante L'arruzz Albacete, Albacete, 3052 gostos \u00b7 3 falam sobre isto \u00b7 1008 estiveram aqui. Especialistas en Arroces. Disfruta ahora de las mejores tapas creativas a precio asequible e...",
+                            "og:locale": "pt_PT",
+                            "og:url": "https://pt-pt.facebook.com/LarruzzAlbacete/",
+                            "al:android:app_name": "Facebook"
+                        }
+                    ],
+                    "cse_image": [
+                        {
+                            "src": "https://lookaside.fbsbx.com/lookaside/crawler/media/?media_id=100064203691982"
+                        }
+                    ]
+                }
+            },
+            {
+                "kind": "customsearch#result",
+                "title": "Picture of L'arruzz, Albacete - Tripadvisor",
+                "htmlTitle": "Picture of <b>L&#39;arruzz</b>, <b>Albacete</b> - Tripadvisor",
+                "link": "https://www.tripadvisor.com/LocationPhotoDirectLink-g187486-d2714908-i207005773-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html",
+                "displayLink": "www.tripadvisor.com",
+                "snippet": "L'arruzz, Albacete Picture: L'Arruzz Albacete - Check out Tripadvisor members' 247 candid photos and videos of L'arruzz.",
+                "htmlSnippet": "<b>L&#39;arruzz</b>, <b>Albacete</b> Picture: <b>L&#39;Arruzz Albacete</b> - Check out Tripadvisor members&#39; 247 candid photos and videos of <b>L&#39;arruzz</b>.",
+                "cacheId": "3DUJ0ZTOQ7cJ",
+                "formattedUrl": "https://www.tripadvisor.com/LocationPhotoDirectLink-g187486-d2714908- i207005773-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Manch...",
+                "htmlFormattedUrl": "https://www.tripadvisor.com/LocationPhotoDirectLink-g187486-d2714908- i207005773-L_<b>arruzz</b>-<b>Albacete</b>_Province_of_<b>Albacete</b>_Castile_La_Manch...",
+                "pagemap": {
+                    "cse_thumbnail": [
+                        {
+                            "src": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcQhreUPG-cjimcSeGIrg1_jSuYf7qGe4H-eL86fCetEY6ikpKxX1_Bx82A",
+                            "width": "259",
+                            "height": "194"
+                        }
+                    ],
+                    "metatags": [
+                        {
+                            "twitter:app:url:iphone": "tripadvisor://www.tripadvisor.com/LocationPhotoDirectLink-g187486-d2714908-i207005773-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:image": "https://media-cdn.tripadvisor.com/media/photo-s/03/68/40/7b/l-arruzz.jpg",
+                            "apple-itunes-app": "app-id=284876795",
+                            "theme-color": "#34e0a1",
+                            "og:image:width": "550",
+                            "al:ios:app_name": "TripAdvisor",
+                            "twitter:app:url:ipad": "tripadvisor://www.tripadvisor.com/LocationPhotoDirectLink-g187486-d2714908-i207005773-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:title": "L'Arruzz Albacete - Picture of L'arruzz, Albacete - Tripadvisor",
+                            "twitter:app:id:ipad": "284876795",
+                            "og:image:height": "412",
+                            "twitter:app:id:iphone": "284876795",
+                            "al:ios:url": "tripadvisor://www.tripadvisor.com/LocationPhotoDirectLink-g187486-d2714908-i207005773-L_arruzz-Albacete_Province_of_Albacete_Castile_La_Mancha.html?m=33762",
+                            "og:description": "L'arruzz, Albacete Picture: L'Arruzz Albacete - Check out Tripadvisor members' 247 candid photos and videos of L'arruzz",
+                            "fb:pages": "5863091683",
+                            "al:ios:app_store_id": "284876795",
+                            "twitter:image": "https://static.tacdn.com/img2/brand_refresh/application_icons/post-image-550x550.png",
+                            "viewport": "width=device-width, initial-scale=1.0, user-scalable=no",
+                            "format-detection": "telephone=no"
+                        }
+                    ],
+                    "cse_image": [
+                        {
+                            "src": "https://media-cdn.tripadvisor.com/media/photo-s/03/68/40/7b/l-arruzz.jpg"
+                        }
+                    ]
+                }
+            },
+            {
+                "kind": "customsearch#result",
+                "title": "Restaurante L'Arruzz Albacete en Albacete - Men\u00fa 2022, opiniones ...",
+                "htmlTitle": "<b>Restaurante L&#39;Arruzz Albacete</b> en Albacete - Men\u00fa 2022, opiniones ...",
+                "link": "https://www.thefork.es/restaurante/l-arruzz-albacete-r15544",
+                "displayLink": "www.thefork.es",
+                "snippet": "Restaurante L'Arruzz Albacete en Albacete - la informaci\u00f3n del restaurante L'Arruzz Albacete: Fotos, opiniones de usuarios, precios y men\u00fa.",
+                "htmlSnippet": "<b>Restaurante L&#39;Arruzz Albacete</b> en Albacete - la informaci\u00f3n del <b>restaurante L&#39;Arruzz Albacete</b>: Fotos, opiniones de usuarios, precios y men\u00fa.",
+                "cacheId": "Qjj6O5AU3bcJ",
+                "formattedUrl": "https://www.thefork.es/restaurante/l-arruzz-albacete-r15544",
+                "htmlFormattedUrl": "https://www.thefork.es/<b>restaurante/l-arruzz</b>-<b>albacete</b>-r15544",
+                "pagemap": {
+                    "metatags": [
+                        {
+                            "msapplication-tilecolor": "#589442",
+                            "next-head-count": "30",
+                            "theme-color": "#589442",
+                            "msapplication-tap-highlight": "no",
+                            "viewport": "width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no",
+                            "apple-mobile-web-app-capable": "yes"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
