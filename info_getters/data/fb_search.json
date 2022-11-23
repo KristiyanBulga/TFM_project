@@ -1,0 +1,8 @@
+{
+    "error": {
+        "message": "(#10) This endpoint requires the 'pages_read_engagement' permission or the 'Page Public Content Access' feature or the 'Page Public Metadata Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pages, https://developers.facebook.com/docs/apps/review/feature#reference-PAGES_ACCESS and https://developers.facebook.com/docs/apps/review/feature#page-public-metadata-access for details.",
+        "type": "OAuthException",
+        "code": 10,
+        "fbtrace_id": "AyqsQ72XOK8FIg0Yn64O8eZ"
+    }
+}
