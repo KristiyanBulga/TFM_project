@@ -1,4 +1,4 @@
-import time, json, re
+import time, json, re, os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -6,22 +6,30 @@ from selenium.common.exceptions import NoSuchElementException
 
 info = dict()
 
-### webdriver options
+# Get current directory
+current_file_dir = os.path.realpath(__file__)
+current_file_dir = current_file_dir.replace("\\", "/")
+parent_folder = current_file_dir.rsplit("/", 2)[0]
+
+# webdriver options
 options = webdriver.ChromeOptions()
 options.add_experimental_option('excludeSwitches', ['enable-logging'])
-service = Service("C:/Users/krist/Downloads/chromedriver.exe")
+service = Service(parent_folder + f"/extra/chromedriver.exe")
 
-data = dict()
-with open(f'data/links_ta.json', 'r', encoding='utf-8') as f:
-    data = json.load(f)
-    f.close()
+def scrap(link:str, res_name:str, num:int) -> None:
+    """
+    Function to scrap the restaurant data
 
-for i in range(len(data["restaurants"])):
+    Parameters:
+        link: The link of the restaurant in tripadvisor
+        name: The name of the restaurant in tripadvisor
+        num: The order in which the restaurant is scrapped
+    """
     driver = webdriver.Chrome(service=service, options=options)
-    ta_link = data["restaurants"][i]["link"]
+    ta_link = link
     ### load page
     driver.get(ta_link)
-    time.sleep(1)
+    time.sleep(3)
 
     ### accept cookies
     driver.find_element(By.ID, 'onetrust-accept-btn-handler').click()
@@ -29,9 +37,9 @@ for i in range(len(data["restaurants"])):
 
     ### Before images
     # The site is claimed (Someone of the restaurant manages the profile)
-    before_images = driver.find_element(By.CSS_SELECTOR, '.lBkqB._T')
     try:
-        claimed = driver.find_element(By.CSS_SELECTOR, '.ui_icon.verified-checkmark.BVOnm.d')
+        before_images = driver.find_element(By.CSS_SELECTOR, '.lBkqB._T')
+        driver.find_element(By.CSS_SELECTOR, '.ui_icon.verified-checkmark.BVOnm.d')
         info["claimed"] = True
     except NoSuchElementException:
         info["claimed"] = False
@@ -55,9 +63,12 @@ for i in range(len(data["restaurants"])):
                     aux = hour_data.find_elements(By.XPATH, './span')
                     hour = aux[0].get_attribute('innerHTML')
                     evening = "tarde" in aux[1].get_attribute('innerHTML')
-                    if evening:
+                    if evening and int(hour.split(":")[0]) < 12:
                         hour = hour.split(":")
                         hour = str(int(hour[0]) + 12) + ":" + hour[1]
+                    elif not evening and int(hour.split(":")[0]) == 12:
+                        hour = hour.split(":")
+                        hour = "00" + ":" + hour[1]
                     info["schedule"][day_of_the_week].append(hour)
                 except:
                     pass
@@ -67,6 +78,7 @@ for i in range(len(data["restaurants"])):
 
     ### Cards after images
     cards = driver.find_elements(By.CSS_SELECTOR, '.xLvvm.ui_column.is-12-mobile.is-4-desktop')
+
     ## "Score and opinions" card
     # Overall score
     score = cards[0].find_element(By.CSS_SELECTOR, '.ZDEqb')
@@ -74,19 +86,22 @@ for i in range(len(data["restaurants"])):
     score = re.search('.+?(?=<!--)', score).group(0)
     score = str.replace(score, ",", ".")
     info["score_overall"] = float(score)
+
     # ranking
     ranking = cards[0].find_element(By.CSS_SELECTOR, '.cNFlb')
     ranking = ranking.find_element(By.TAG_NAME, "span")
     ranking = ranking.get_attribute('innerHTML')
     ranking = re.search('(?<=N.º ).*$', ranking).group(0)
     info["ranking"] = int(ranking)
+
     # Traveller's choice
     try:
-        claimed = driver.find_element(By.CSS_SELECTOR, '.ui_icon.travelers-choice-badge.YbepA')
+        driver.find_element(By.CSS_SELECTOR, '.ui_icon.travelers-choice-badge.YbepA')
         info["travellers_choice"] = True
     except NoSuchElementException:
         info["travellers_choice"] = False
-    # More scores
+
+    # More scores       TODO: save in English
     scores = cards[0].find_elements(By.CSS_SELECTOR, '.DzMcu')
     for score in scores:
         name = score.find_element(By.CSS_SELECTOR, '.BPsyj').get_attribute('innerHTML')
@@ -157,8 +172,8 @@ for i in range(len(data["restaurants"])):
         except:
             pass
 
-    with open(f'data/restaurants_ta/restaurant_{i}.json', 'w', encoding='utf-8') as f:
-        json.dump({'restaurant': {"ta_link": ta_link, "name":data["restaurants"][i]["name"], "data": info}}, f, ensure_ascii=False)
+    with open(parent_folder + f'/data/trip_advisor/restaurants_ta/restaurant_{num}.json', 'w', encoding='utf-8') as f:
+        json.dump({'restaurant': {"ta_link": ta_link, "name":res_name, "data": info}}, f, ensure_ascii=False)
         f.close()
 
     driver.quit()
