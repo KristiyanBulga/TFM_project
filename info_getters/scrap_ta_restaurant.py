@@ -16,17 +16,17 @@ options = webdriver.ChromeOptions()
 options.add_experimental_option('excludeSwitches', ['enable-logging'])
 service = Service(parent_folder + f"/extra/chromedriver.exe")
 
-def scrap(link:str, res_name:str, num:int) -> None:
+def scrap(url:str, res_name:str, num:int) -> None:
     """
     Function to scrap the restaurant data
 
     Parameters:
-        link: The link of the restaurant in tripadvisor
+        url: The url of the restaurant in tripadvisor
         name: The name of the restaurant in tripadvisor
         num: The order in which the restaurant is scrapped
     """
     driver = webdriver.Chrome(service=service, options=options)
-    ta_link = link
+    ta_link = url
     ### load page
     driver.get(ta_link)
     time.sleep(3)
@@ -35,10 +35,17 @@ def scrap(link:str, res_name:str, num:int) -> None:
     driver.find_element(By.ID, 'onetrust-accept-btn-handler').click()
     time.sleep(1)
 
+    ### get euros symbol
+    try:
+        before_images = driver.find_element(By.CSS_SELECTOR, '.lBkqB._T')
+        euros = driver.find_element(By.CSS_SELECTOR, '.dlMOJ')
+        symbols = euros.get_attribute("innerHTML")
+        info["symbol"] = symbols if '€' in symbols else None
+    except:
+        info["symbol"] = None
     ### Before images
     # The site is claimed (Someone of the restaurant manages the profile)
     try:
-        before_images = driver.find_element(By.CSS_SELECTOR, '.lBkqB._T')
         driver.find_element(By.CSS_SELECTOR, '.ui_icon.verified-checkmark.BVOnm.d')
         info["claimed"] = True
     except NoSuchElementException:
@@ -81,19 +88,24 @@ def scrap(link:str, res_name:str, num:int) -> None:
 
     ## "Score and opinions" card
     # Overall score
-    score = cards[0].find_element(By.CSS_SELECTOR, '.ZDEqb')
-    score = score.get_attribute('innerHTML')
-    score = re.search('.+?(?=<!--)', score).group(0)
-    score = str.replace(score, ",", ".")
-    info["score_overall"] = float(score)
+    try:
+        score = cards[0].find_element(By.CSS_SELECTOR, '.ZDEqb')
+        score = score.get_attribute('innerHTML')
+        score = re.search('.+?(?=<!--)', score).group(0)
+        score = str.replace(score, ",", ".")
+        info["score_overall"] = float(score)
+    except:
+        info["score_overall"] = None
 
     # ranking
-    ranking = cards[0].find_element(By.CSS_SELECTOR, '.cNFlb')
-    ranking = ranking.find_element(By.TAG_NAME, "span")
-    ranking = ranking.get_attribute('innerHTML')
-    ranking = re.search('(?<=N.º ).*$', ranking).group(0)
-    info["ranking"] = int(ranking)
-
+    try:
+        ranking = cards[0].find_element(By.CSS_SELECTOR, '.cNFlb')
+        ranking = ranking.find_element(By.TAG_NAME, "span")
+        ranking = ranking.get_attribute('innerHTML')
+        ranking = re.search('(?<=N.º ).*$', ranking).group(0)
+        info["ranking"] = int(ranking)
+    except:
+        info["ranking"] = None
     # Traveller's choice
     try:
         driver.find_element(By.CSS_SELECTOR, '.ui_icon.travelers-choice-badge.YbepA')
@@ -101,45 +113,56 @@ def scrap(link:str, res_name:str, num:int) -> None:
     except NoSuchElementException:
         info["travellers_choice"] = False
 
-    # More scores       TODO: save in English
+    # More scores 
+    naming = {"Comida": "score_food", "Servicio": "score_service", "Calidad/precio": "score_price_quality", "Atmósfera": "score_atmosphere"}
+    for score_type in naming:
+        info[naming[score_type]] = None
     scores = cards[0].find_elements(By.CSS_SELECTOR, '.DzMcu')
     for score in scores:
         name = score.find_element(By.CSS_SELECTOR, '.BPsyj').get_attribute('innerHTML')
         rating = score.find_element(By.CSS_SELECTOR, '.ui_bubble_rating')
         rating = rating.get_attribute('class').split()[1]
         rating = float(re.search('(?<=bubble_).*$', rating).group(0))
-        info[name] = rating / 10
+        info[naming[name]] = rating / 10
 
     ## Second card: we inspect directly the all details option
-    cards[1].find_element(By.CSS_SELECTOR, '.OTyAN._S.b').click()
-    all_details = driver.find_element(By.CSS_SELECTOR, '.VZmgo.D.X0.X1.Za')
-    columns = all_details.find_elements(By.CSS_SELECTOR, '.ui_column')
-    # Some general information
-    # info["general_info"] = columns[0].find_element(By.CSS_SELECTOR, '.jmnaM').get_attribute('innerHTML')
-    details_divs = columns[-1].find_elements(By.XPATH, './div/div')
+    try:
+        cards[1].find_element(By.CSS_SELECTOR, '.OTyAN._S.b').click()
+        all_details = driver.find_element(By.CSS_SELECTOR, '.VZmgo.D.X0.X1.Za')
+        columns = all_details.find_elements(By.CSS_SELECTOR, '.ui_column')
+        # Some general information
+        # info["general_info"] = columns[0].find_element(By.CSS_SELECTOR, '.jmnaM').get_attribute('innerHTML')
+        details_divs = columns[-1].find_elements(By.XPATH, './div/div')
 
-    for dd in details_divs:
-        title = dd.find_element(By.CSS_SELECTOR, '.tbUiL.b').get_attribute('innerHTML').lower()
-        value = dd.find_element(By.CSS_SELECTOR, '.SrqKb').get_attribute('innerHTML')
+        for dd in details_divs:
+            title = dd.find_element(By.CSS_SELECTOR, '.tbUiL.b').get_attribute('innerHTML').lower()
+            value = dd.find_element(By.CSS_SELECTOR, '.SrqKb').get_attribute('innerHTML')
 
-        if title == "rango de precios":
-            info["price"] = dict()
-            prices = value.split('-')
-            info["price"]["lower"] = float(re.search('.+?(?=&nbsp)', prices[0].strip()).group(0))
-            info["price"]["upper"] = float(re.search('.+?(?=&nbsp)', prices[1].strip()).group(0))
-        elif title == "tipos de cocina":
-            info["type"] = [x.strip() for x in value.split(",")]
-        elif title == "dietas especiales":
-            info["special_diets"] = [x.strip() for x in value.split(",")]
-        elif title == "comidas":
-            info["meals"] = [x.strip() for x in value.split(",")]
-        elif title == "ventajas":
-            info["advantages"] = [x.strip() for x in value.split(",")]
+            if title == "rango de precios":
+                info["price"] = dict()
+                prices = value.split('-')
+                info["price"]["lower"] = float(re.search('.+?(?=&nbsp)', prices[0].strip()).group(0))
+                info["price"]["upper"] = float(re.search('.+?(?=&nbsp)', prices[1].strip()).group(0))
+            elif title == "tipos de cocina":
+                info["type"] = [x.strip() for x in value.split(",")]
+            elif title == "dietas especiales":
+                info["special_diets"] = [x.strip() for x in value.split(",")]
+            elif title == "comidas":
+                info["meals"] = [x.strip() for x in value.split(",")]
+            elif title == "ventajas":
+                info["advantages"] = [x.strip() for x in value.split(",")]
+        all_details.find_element(By.CSS_SELECTOR, '.zPIck._Q.Z1.t._U.c._S.zXWgK').click()
+    except:
+        info["price"] = None
+        info["type"] = None
+        info["special_diets"] = None
+        info["meals"] = None
+        info["advantages"] = None
 
-
-    all_details.find_element(By.CSS_SELECTOR, '.zPIck._Q.Z1.t._U.c._S.zXWgK').click()
-
-
+    info["address"] = None
+    info["webpage"] = None
+    info["email"] = None
+    info["phone"] = None
     ## Third card
     divs = cards[2].find_elements(By.CSS_SELECTOR, '.IdiaP.Me')
     for div in divs:
@@ -152,7 +175,7 @@ def scrap(link:str, res_name:str, num:int) -> None:
                 "link": link.get_attribute('href')
             }
         except:
-            pass
+            info["address"]
         try:
             div.find_element(By.CSS_SELECTOR, '.ui_icon.laptop.XMrSj')
             link = div.find_element(By.CSS_SELECTOR, '.YnKZo.Ci.Wc._S.C.FPPgD')
@@ -172,7 +195,7 @@ def scrap(link:str, res_name:str, num:int) -> None:
         except:
             pass
 
-    with open(parent_folder + f'/data/trip_advisor/restaurants_ta/restaurant_{num}.json', 'w', encoding='utf-8') as f:
+    with open(parent_folder + f"/data/trip_advisor/restaurants_ta/{ re.search('(?<=Reviews-)(.*)(?=.html)', url).group(0)}.json", 'w', encoding='utf-8') as f:
         json.dump({'restaurant': {"ta_link": ta_link, "name":res_name, "data": info}}, f, ensure_ascii=False)
         f.close()
 

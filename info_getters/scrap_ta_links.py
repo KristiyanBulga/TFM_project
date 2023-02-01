@@ -20,13 +20,13 @@ driver.find_element(By.ID, 'onetrust-accept-btn-handler').click()
 time.sleep(1)
 
 ### select date
-driver.find_element(By.CSS_SELECTOR ,'.unified-picker.ui_picker').click()
-months = driver.find_elements(By.CSS_SELECTOR, ".dsdc-month")
-month_name = months[1].find_element(By.CSS_SELECTOR, ".dsdc-month-title")
-print("Seleccionando fecha del mes:", month_name.get_attribute("innerHTML"))
-dates = months[1].find_elements(By.CSS_SELECTOR, ".dsdc-cell.dsdc-day")
-dates[10].click()
-time.sleep(1)
+# driver.find_element(By.CSS_SELECTOR ,'.unified-picker.ui_picker').click()
+# months = driver.find_elements(By.CSS_SELECTOR, ".dsdc-month")
+# month_name = months[1].find_element(By.CSS_SELECTOR, ".dsdc-month-title")
+# print("Seleccionando fecha del mes:", month_name.get_attribute("innerHTML"))
+# dates = months[1].find_elements(By.CSS_SELECTOR, ".dsdc-cell.dsdc-day")
+# dates[10].click()
+# time.sleep(1)
 
 ### select hour
 print("Ponemos la hora a las 19:30")
@@ -67,7 +67,7 @@ for i in range(int(num_restaurants)//restaurants_per_page+1):
     pages_links = driver.find_element(By.CSS_SELECTOR, '.unified.pagination.js_pageLinks')
     if i < int(num_restaurants)//restaurants_per_page:
         pages_links.find_element(By.XPATH, "//a[normalize-space()="+str(i+2)+"]").click()
-    time.sleep(4)
+    time.sleep(5)
 print("Se han sacado los links correctamente")
 ### Write in a file all the data
 with open('data/links_ta.json', 'w', encoding='utf-8') as f:
