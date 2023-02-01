@@ -1,0 +1,127 @@
+{
+	"Origen": {
+		"Continental": [
+			"Africana",
+			"Americana",
+			"Asiática",
+			"Europea",
+			"Internacional"
+		],
+		"Subcontinental": [
+			{
+				"Centroeuropea": {
+					"Continental": "Europea"
+				}
+			},
+			{
+				"De Asia central": {
+					"Continental": "Asiática"
+				}
+			},
+			{
+				"De Oriente Medio": {
+					"Continental": "Asiática"
+				}
+			},
+			{
+				"Sudamericana": {
+					"Continental": "Americana"
+				}
+			}
+		],
+		"Internacional": [
+			{
+				"Albanesa": {
+					"Continental": "Europea"
+				}
+			},
+			{
+				"Alemana": {
+					"Continental": "Europea"
+				}
+			},
+			{
+				"Argelina": {
+					"Continental": "Africana"
+				}
+			},
+			{
+				"Argentina": {
+					"Subcontinental": "Sudamericana"
+				}
+			},
+			{
+				"China": {
+					"Continental": "Asiática"
+				}
+			},
+			{
+				"Colombiana": {
+					"Subcontinental": "Sudamericana"
+				}
+			},
+			{
+				"Española": {
+					"Continental": "Europea"
+				}
+			},
+			{
+				"Hawaiana": {
+					"Continental": "Americana"
+				}
+			},
+			{
+				"Húngara": {
+					"Continental": "Europea"
+				}
+			},
+			{
+				"India": {
+					"Continental": "Asiática"
+				}
+			},
+			{
+				"Irlandesa": {
+					"Continental": "Europea"
+				}
+			},
+			{
+				"Italiana": {
+					"Continental": "Europea"
+				}
+			},
+			{
+				"Japonesa": {
+					"Continental": "Asiática"
+				}
+			},
+			{
+				"Latina": {
+					"Continental": "Americana"
+				}
+			},
+			{
+				"Marroquí": {
+					"Continental": "Africana"
+				}
+			},
+			{
+				"Mexicana": {
+					"Continental": "Americana"
+				}
+			},
+			{
+				"Turca": {
+					"Continental": "Europea"
+				}
+			}
+		],
+		"Nacional": [
+			{
+				"Vasca": {
+					"Internacional": "Española"
+				}
+			}
+		]
+	}
+}
