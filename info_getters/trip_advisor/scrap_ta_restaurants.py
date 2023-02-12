@@ -10,7 +10,7 @@ info = dict()
 # Get current directory
 current_file_dir = os.path.realpath(__file__)
 current_file_dir = current_file_dir.replace("\\", "/")
-parent_folder = current_file_dir.rsplit("/", 2)[0]
+parent_folder = current_file_dir.rsplit("/", 3)[0]
 
 # webdriver options
 options = webdriver.ChromeOptions()

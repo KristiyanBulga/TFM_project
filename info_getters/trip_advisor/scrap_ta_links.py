@@ -1,5 +1,6 @@
 import time
 import json
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
@@ -12,6 +13,11 @@ options.add_experimental_option('excludeSwitches', ['enable-logging'])
 service = Service("C:/Users/krist/Downloads/chromedriver.exe")
 month_code = {1: "ene", 2: "feb", 3: "mar", 4: "abr", 5: "may", 6: "jun", 7: "jul", 8: "ago", 9: "sept", 10: "oct",
               11: "nov", 12: "dic"}
+
+# Get current directory
+current_file_dir = os.path.realpath(__file__)
+current_file_dir = current_file_dir.replace("\\", "/")
+parent_folder = current_file_dir.rsplit("/", 3)[0]
 
 
 def scrap_links(day_num: int, month_num: int, year_num: int) -> None:
@@ -91,5 +97,5 @@ def scrap_links(day_num: int, month_num: int, year_num: int) -> None:
         time.sleep(5)
 
     # Write in a file all the data
-    with open('data/trip_advisor/links_ta.json', 'w', encoding='utf-8') as f:
+    with open(parent_folder + '/data/trip_advisor/links_ta.json', 'w', encoding='utf-8') as f:
         json.dump({'restaurants': links}, f, ensure_ascii=False)
