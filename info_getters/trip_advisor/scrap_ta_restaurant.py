@@ -1,4 +1,7 @@
-import time, json, re, os
+import time
+import json
+import re
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -16,34 +19,37 @@ options = webdriver.ChromeOptions()
 options.add_experimental_option('excludeSwitches', ['enable-logging'])
 service = Service(parent_folder + f"/extra/chromedriver.exe")
 
-def scrap(url:str, res_name:str, num:int) -> None:
-    """
-    Function to scrap the restaurant data
+naming = {"Comida": "score_food", "Servicio": "score_service", "Calidad/precio": "score_price_quality",
+          "Atmósfera": "score_atmosphere"}
 
+
+def scrap(url: str, res_name: str) -> None:
+    """
+    Scrap the restaurant data from trip-advisor
     Parameters:
         url: The url of the restaurant in tripadvisor
-        name: The name of the restaurant in tripadvisor
-        num: The order in which the restaurant is scrapped
+        res_name: The name of the restaurant in tripadvisor
     """
     driver = webdriver.Chrome(service=service, options=options)
     ta_link = url
-    ### load page
+    # load page
     driver.get(ta_link)
     time.sleep(3)
 
-    ### accept cookies
+    # accept cookies
     driver.find_element(By.ID, 'onetrust-accept-btn-handler').click()
     time.sleep(1)
 
-    ### get euros symbol
+    # get euros symbol
     try:
         before_images = driver.find_element(By.CSS_SELECTOR, '.lBkqB._T')
-        euros = driver.find_element(By.CSS_SELECTOR, '.dlMOJ')
+        euros = before_images.find_element(By.CSS_SELECTOR, '.dlMOJ')
         symbols = euros.get_attribute("innerHTML")
         info["symbol"] = symbols if '€' in symbols else None
     except:
         info["symbol"] = None
-    ### Before images
+
+    # Before images
     # The site is claimed (Someone of the restaurant manages the profile)
     try:
         driver.find_element(By.CSS_SELECTOR, '.ui_icon.verified-checkmark.BVOnm.d')
@@ -52,7 +58,6 @@ def scrap(url:str, res_name:str, num:int) -> None:
         info["claimed"] = False
 
     # Menu ???
-
 
     # Schedule
     try:
@@ -83,10 +88,10 @@ def scrap(url:str, res_name:str, num:int) -> None:
     except:
         info["schedule"] = None
 
-    ### Cards after images
+    # Cards after images
     cards = driver.find_elements(By.CSS_SELECTOR, '.xLvvm.ui_column.is-12-mobile.is-4-desktop')
 
-    ## "Score and opinions" card
+    # "Score and opinions" card
     # Overall score
     try:
         score = cards[0].find_element(By.CSS_SELECTOR, '.ZDEqb')
@@ -113,8 +118,7 @@ def scrap(url:str, res_name:str, num:int) -> None:
     except NoSuchElementException:
         info["travellers_choice"] = False
 
-    # More scores 
-    naming = {"Comida": "score_food", "Servicio": "score_service", "Calidad/precio": "score_price_quality", "Atmósfera": "score_atmosphere"}
+    # More scores
     for score_type in naming:
         info[naming[score_type]] = None
     scores = cards[0].find_elements(By.CSS_SELECTOR, '.DzMcu')
@@ -125,7 +129,7 @@ def scrap(url:str, res_name:str, num:int) -> None:
         rating = float(re.search('(?<=bubble_).*$', rating).group(0))
         info[naming[name]] = rating / 10
 
-    ## Second card: we inspect directly the all details option
+    # Second card: we inspect directly the all details option
     try:
         cards[1].find_element(By.CSS_SELECTOR, '.OTyAN._S.b').click()
         all_details = driver.find_element(By.CSS_SELECTOR, '.VZmgo.D.X0.X1.Za')
@@ -163,7 +167,7 @@ def scrap(url:str, res_name:str, num:int) -> None:
     info["webpage"] = None
     info["email"] = None
     info["phone"] = None
-    ## Third card
+    # Third card
     divs = cards[2].find_elements(By.CSS_SELECTOR, '.IdiaP.Me')
     for div in divs:
         try:
@@ -175,7 +179,7 @@ def scrap(url:str, res_name:str, num:int) -> None:
                 "link": link.get_attribute('href')
             }
         except:
-            info["address"]
+            pass
         try:
             div.find_element(By.CSS_SELECTOR, '.ui_icon.laptop.XMrSj')
             link = div.find_element(By.CSS_SELECTOR, '.YnKZo.Ci.Wc._S.C.FPPgD')
@@ -196,7 +200,7 @@ def scrap(url:str, res_name:str, num:int) -> None:
             pass
 
     with open(parent_folder + f"/data/trip_advisor/restaurants_ta/{ re.search('(?<=Reviews-)(.*)(?=.html)', url).group(0)}.json", 'w', encoding='utf-8') as f:
-        json.dump({'restaurant': {"ta_link": ta_link, "name":res_name, "data": info}}, f, ensure_ascii=False)
+        json.dump({'restaurant': {"ta_link": ta_link, "name": res_name, "data": info}}, f, ensure_ascii=False)
         f.close()
 
     driver.quit()
