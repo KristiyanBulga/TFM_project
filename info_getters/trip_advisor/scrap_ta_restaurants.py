@@ -1,4 +1,5 @@
-import json, os
+import json
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 
@@ -25,6 +26,6 @@ with open(parent_folder + f"/data/trip_advisor/links_ta.json", 'r', encoding='ut
 # For each restaurant, scrap data
 for i in range(len(data["restaurants"])):
     try:
-        scrap(data["restaurants"][i]["link"], data["restaurants"][i]["name"], i)
+        scrap(data["restaurants"][i]["link"], data["restaurants"][i]["name"])
     except:
         print(f'Error: {data["restaurants"][i]["link"]}')

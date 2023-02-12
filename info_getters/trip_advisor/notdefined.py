@@ -77,7 +77,7 @@ df = pd.concat(dfs, ignore_index=True)
 df.to_parquet(parent_folder + "/data/trip_advisor/ta_tags_score.parquet")
 
 auxiliary = dict()
-with open('C:/Users/krist/Documents/MiGithub/TFM_project/data/trip_advisor/food_type_ta.json', "r", encoding="utf8") as f:
+with open('/data/trip_advisor/food_type_ta.json', "r", encoding="utf8") as f:
     auxiliary = json.loads(f.read())
     f.close()
 print(auxiliary)
