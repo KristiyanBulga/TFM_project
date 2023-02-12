@@ -1,8 +1,11 @@
-import os, json, time
+import os
+import json
+import time
 import pandas as pd
 import plotly.express as px
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+
 
 def generate_ta_restaurants_parquet(parent_folder):
     dfs = []
@@ -22,20 +25,17 @@ def generate_ta_restaurants_parquet(parent_folder):
     df = pd.concat(dfs, ignore_index=True)
     df.to_parquet(parent_folder + "/data/trip_advisor/ta_restaurants.parquet")
 
+
 # Get current directory
 current_file_dir = os.path.realpath(__file__)
 current_file_dir = current_file_dir.replace("\\", "/")
-parent_folder = current_file_dir.rsplit("/", 2)[0]
+parent_folder = current_file_dir.rsplit("/", 3)[0]
 
 restaurants_folder = parent_folder + "/data/trip_advisor/restaurants_ta"
 dfs = []
 data = dict()
 # generate_ta_restaurants_parquet(parent_folder)
 # TODO
-
-
-
-
 
 for file in os.listdir(restaurants_folder):
     with open(restaurants_folder + f"/{file}", "r", encoding="utf8") as f:
