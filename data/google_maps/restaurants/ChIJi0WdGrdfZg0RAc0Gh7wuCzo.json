@@ -1,0 +1,339 @@
+{
+  "html_attributions": [],
+  "result": {
+    "address_components": [
+      {
+        "long_name": "8",
+        "short_name": "8",
+        "types": [
+          "street_number"
+        ]
+      },
+      {
+        "long_name": "Calle García Mas",
+        "short_name": "C. García Mas",
+        "types": [
+          "route"
+        ]
+      },
+      {
+        "long_name": "Albacete",
+        "short_name": "Albacete",
+        "types": [
+          "locality",
+          "political"
+        ]
+      },
+      {
+        "long_name": "Albacete",
+        "short_name": "AB",
+        "types": [
+          "administrative_area_level_2",
+          "political"
+        ]
+      },
+      {
+        "long_name": "Castilla-La Mancha",
+        "short_name": "CM",
+        "types": [
+          "administrative_area_level_1",
+          "political"
+        ]
+      },
+      {
+        "long_name": "Spain",
+        "short_name": "ES",
+        "types": [
+          "country",
+          "political"
+        ]
+      },
+      {
+        "long_name": "02005",
+        "short_name": "02005",
+        "types": [
+          "postal_code"
+        ]
+      }
+    ],
+    "adr_address": "<span class=\"street-address\">C. García Mas, 8</span>, <span class=\"postal-code\">02005</span> <span class=\"locality\">Albacete</span>, <span class=\"country-name\">Spain</span>",
+    "business_status": "OPERATIONAL",
+    "current_opening_hours": {
+      "open_now": true,
+      "periods": [
+        {
+          "close": {
+            "date": "2023-02-12",
+            "day": 0,
+            "time": "1900"
+          },
+          "open": {
+            "date": "2023-02-12",
+            "day": 0,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "date": "2023-02-13",
+            "day": 1,
+            "time": "1700"
+          },
+          "open": {
+            "date": "2023-02-13",
+            "day": 1,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "date": "2023-02-14",
+            "day": 2,
+            "time": "1700"
+          },
+          "open": {
+            "date": "2023-02-14",
+            "day": 2,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "date": "2023-02-15",
+            "day": 3,
+            "time": "1700"
+          },
+          "open": {
+            "date": "2023-02-15",
+            "day": 3,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "date": "2023-02-16",
+            "day": 4,
+            "time": "1700"
+          },
+          "open": {
+            "date": "2023-02-16",
+            "day": 4,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "date": "2023-02-17",
+            "day": 5,
+            "time": "1700"
+          },
+          "open": {
+            "date": "2023-02-17",
+            "day": 5,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "date": "2023-02-18",
+            "day": 6,
+            "time": "1900"
+          },
+          "open": {
+            "date": "2023-02-18",
+            "day": 6,
+            "time": "1100"
+          }
+        }
+      ],
+      "weekday_text": [
+        "Monday: 12:00 – 5:00 PM",
+        "Tuesday: 12:00 – 5:00 PM",
+        "Wednesday: 12:00 – 5:00 PM",
+        "Thursday: 12:00 – 5:00 PM",
+        "Friday: 12:00 – 5:00 PM",
+        "Saturday: 11:00 AM – 7:00 PM",
+        "Sunday: 12:00 – 7:00 PM"
+      ]
+    },
+    "delivery": false,
+    "dine_in": true,
+    "formatted_address": "C. García Mas, 8, 02005 Albacete, Spain",
+    "formatted_phone_number": "967 22 03 36",
+    "international_phone_number": "+34 967 22 03 36",
+    "name": "Restaurante LA POSADICA.",
+    "opening_hours": {
+      "open_now": true,
+      "periods": [
+        {
+          "close": {
+            "day": 0,
+            "time": "1900"
+          },
+          "open": {
+            "day": 0,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "day": 1,
+            "time": "1700"
+          },
+          "open": {
+            "day": 1,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "day": 2,
+            "time": "1700"
+          },
+          "open": {
+            "day": 2,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "day": 3,
+            "time": "1700"
+          },
+          "open": {
+            "day": 3,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "day": 4,
+            "time": "1700"
+          },
+          "open": {
+            "day": 4,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "day": 5,
+            "time": "1700"
+          },
+          "open": {
+            "day": 5,
+            "time": "1200"
+          }
+        },
+        {
+          "close": {
+            "day": 6,
+            "time": "1900"
+          },
+          "open": {
+            "day": 6,
+            "time": "1100"
+          }
+        }
+      ],
+      "weekday_text": [
+        "Monday: 12:00 – 5:00 PM",
+        "Tuesday: 12:00 – 5:00 PM",
+        "Wednesday: 12:00 – 5:00 PM",
+        "Thursday: 12:00 – 5:00 PM",
+        "Friday: 12:00 – 5:00 PM",
+        "Saturday: 11:00 AM – 7:00 PM",
+        "Sunday: 12:00 – 7:00 PM"
+      ]
+    },
+    "place_id": "ChIJi0WdGrdfZg0RAc0Gh7wuCzo",
+    "plus_code": {
+      "compound_code": "X4WP+RR Albacete, Spain",
+      "global_code": "8CCWX4WP+RR"
+    },
+    "price_level": 2,
+    "rating": 4.4,
+    "reservable": true,
+    "reviews": [
+      {
+        "author_name": "john randall",
+        "author_url": "https://www.google.com/maps/contrib/116869526762259097697/reviews",
+        "language": "en",
+        "original_language": "en",
+        "profile_photo_url": "https://lh3.googleusercontent.com/a/AEdFTp7mQlspUH4IE-P2QAoHenuyDVQ_qTGVHP6_1LA9=s128-c0x00000000-cc-rp-mo",
+        "rating": 5,
+        "relative_time_description": "5 years ago",
+        "text": "Visited this lovely restaurant in March with friends great food atmosphere and a very friendly owner. I will return again the next time I am in Albacete",
+        "time": 1504304273,
+        "translated": false
+      },
+      {
+        "author_name": "YellowSub Sub",
+        "author_url": "https://www.google.com/maps/contrib/101680249899590999303/reviews",
+        "language": "en-US",
+        "original_language": "es",
+        "profile_photo_url": "https://lh3.googleusercontent.com/a-/AD5-WClF3fIRMDxL_zCnzgMeyUkUVPPsn390-QfBY-t-Mg=s128-c0x00000000-cc-rp-mo",
+        "rating": 5,
+        "relative_time_description": "a month ago",
+        "text": "The restaurant is beautiful, with a neat and cheerful decoration. Very good distribution of spaces that allows a total separation between the tables and celebrations.\nThe food is simple, excellent and well presented; special mention to the meats and roasts... spectacular. Good desserts and wines.\nApart from the menu, it offers set menus, generous and at a good price.",
+        "time": 1672040530,
+        "translated": true
+      },
+      {
+        "author_name": "MARIA VICTORIA POVEDA LARROSA",
+        "author_url": "https://www.google.com/maps/contrib/100929331649174541500/reviews",
+        "language": "en-US",
+        "original_language": "es",
+        "profile_photo_url": "https://lh3.googleusercontent.com/a/AEdFTp4M3YNxqO2Nlcc7lrS_G06zT3WQ6i_tL0w8Y_aj=s128-c0x00000000-cc-rp-mo-ba5",
+        "rating": 5,
+        "relative_time_description": "2 months ago",
+        "text": "Restaurant next to the bullring. Good meat. Good menu of both meat and fish. It has a grill. There are menus at a good price and if you want suckling pig it is better to order it. There is parking in the square but it is somewhat difficult. Wheelchair access.\nVery good attention and good price. Very good portions.",
+        "time": 1669154670,
+        "translated": true
+      },
+      {
+        "author_name": "Raul",
+        "author_url": "https://www.google.com/maps/contrib/106100895636478430147/reviews",
+        "language": "en-US",
+        "original_language": "es",
+        "profile_photo_url": "https://lh3.googleusercontent.com/a/AEdFTp5Tz0GDRsBakCmZR8j1soAzq1IbbvdN2sgeLi0_=s128-c0x00000000-cc-rp-mo-ba4",
+        "rating": 4,
+        "relative_time_description": "10 months ago",
+        "text": "It's all very good. The decoration is quite striking and beautiful. I wish there were more waiters so that the attention was faster and more attentive.",
+        "time": 1648553938,
+        "translated": true
+      },
+      {
+        "author_name": "Balbino muñoz",
+        "author_url": "https://www.google.com/maps/contrib/108910735337908872153/reviews",
+        "language": "en-US",
+        "original_language": "es",
+        "profile_photo_url": "https://lh3.googleusercontent.com/a/AEdFTp6HHxiYa4GEaHUdfZvcjFwJHmAa4BFOeHsPmMtU=s128-c0x00000000-cc-rp-mo",
+        "rating": 5,
+        "relative_time_description": "10 months ago",
+        "text": "Restaurant in Albacete located in front of the bullring. Striking decoration with very original ceramics. It has a wood-burning oven where they make unparalleled suckling lambs, in addition to unique dishes, examples are the spicy tuna salad with peppers, you have to try the octopus with mashed potatoes and its ink, totally innovative. Homemade desserts and grandma rolls-the best. The owners put all their interest in pleasing you and that you enjoy dinner or lunch. There is always a good memory.",
+        "time": 1648854491,
+        "translated": true
+      }
+    ],
+    "serves_beer": true,
+    "serves_dinner": true,
+    "serves_lunch": true,
+    "serves_vegetarian_food": false,
+    "serves_wine": true,
+    "takeout": true,
+    "types": [
+      "restaurant",
+      "food",
+      "point_of_interest",
+      "establishment"
+    ],
+    "url": "https://maps.google.com/?cid=4182488066197736705",
+    "user_ratings_total": 527,
+    "utc_offset": 60,
+    "vicinity": "Calle García Mas, 8, Albacete",
+    "website": "http://www.laposadica.com/",
+    "wheelchair_accessible_entrance": true
+  },
+  "status": "OK"
+}
