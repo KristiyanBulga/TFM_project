@@ -199,7 +199,9 @@ def scrap(url: str, res_name: str) -> None:
         except:
             pass
 
-    with open(parent_folder + f"/data/trip_advisor/restaurants_ta/{ re.search('(?<=Reviews-)(.*)(?=.html)', url).group(0)}.json", 'w', encoding='utf-8') as f:
+    id_ta = re.search('(?<=Restaurant_Review-)(.*)(?=-Reviews)', url).group(0)
+
+    with open(parent_folder + f"/data/trip_advisor/restaurants_ta/{id_ta}.json", 'w', encoding='utf-8') as f:
         json.dump({'restaurant': {"ta_link": ta_link, "name": res_name, "data": info}}, f, ensure_ascii=False)
         f.close()
 
