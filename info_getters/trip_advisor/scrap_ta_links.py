@@ -99,3 +99,4 @@ def scrap_links(day_num: int, month_num: int, year_num: int) -> None:
     # Write in a file all the data
     with open(parent_folder + '/data/trip_advisor/links_ta.json', 'w', encoding='utf-8') as f:
         json.dump({'restaurants': links}, f, ensure_ascii=False)
+        f.close()
