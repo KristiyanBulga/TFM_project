@@ -9,7 +9,6 @@ from selenium.webdriver.chrome.service import Service
 # find all links to restaurants in tripadvisor
 # web_driver options
 options = webdriver.ChromeOptions()
-options.add_experimental_option('excludeSwitches', ['enable-logging'])
 service = Service("C:/Users/krist/Downloads/chromedriver.exe")
 month_code = {1: "ene", 2: "feb", 3: "mar", 4: "abr", 5: "may", 6: "jun", 7: "jul", 8: "ago", 9: "sept", 10: "oct",
               11: "nov", 12: "dic"}
@@ -29,6 +28,7 @@ def scrap_links(day_num: int, month_num: int, year_num: int) -> None:
         year_num:
     Returns: None
     """
+    options.add_argument("--headless")  # Hide the GUI
     driver = webdriver.Chrome(service=service, options=options)
 
     # load page
@@ -55,13 +55,13 @@ def scrap_links(day_num: int, month_num: int, year_num: int) -> None:
             if not clicked_date:
                 raise Exception("ERROR: The specified day does not exist")
             break
-    time.sleep(30)
+    time.sleep(10)
 
     # select hour
-    selector_div = driver.find_element(By.CSS_SELECTOR, '.ui_picker.resv_img.drop_down_input.drop_down_select.notOldIE.inner.time_dropdown.twenty_four_format')
-    select = Select(selector_div.find_element(By.CSS_SELECTOR, '.drop_down_select_elmt'))
-    select.select_by_visible_text('19:30')
-    time.sleep(1)
+    # selector_div = driver.find_element(By.CSS_SELECTOR, '.ui_picker.resv_img.drop_down_input.drop_down_select.notOldIE.inner.time_dropdown.twenty_four_format')
+    # select = Select(selector_div.find_element(By.CSS_SELECTOR, '.drop_down_select_elmt'))
+    # select.select_by_visible_text('19:30')
+    # time.sleep(1)
 
     # select people
     selector_div = driver.find_element(By.CSS_SELECTOR, '.ui_picker.resv_img.drop_down_input.drop_down_select.notOldIE.inner.ppl_dropdown ')
@@ -76,6 +76,7 @@ def scrap_links(day_num: int, month_num: int, year_num: int) -> None:
     # GET BASIC INFO OF THE RESTAURANTS
     restaurants_per_page = 30
     # number of found restaurants
+    driver.save_screenshot(parent_folder + '/data/capture.png')
     num_restaurants = driver.find_element(By.ID, 'component_36').find_element(By.CSS_SELECTOR,
                                                                               '.b').get_attribute("innerHTML")
     print(f"{num_restaurants} restaurants have been found")
@@ -83,6 +84,7 @@ def scrap_links(day_num: int, month_num: int, year_num: int) -> None:
 
     # Scrap all pages
     for i in range(int(num_restaurants)//restaurants_per_page+1):
+        print(i)
         # Scrap info of each restaurant
         restaurant_list = driver.find_element(By.ID, 'component_2')
         all_restaurants = restaurant_list.find_elements(By.CSS_SELECTOR, '.Lwqic.Cj.b')
@@ -100,3 +102,6 @@ def scrap_links(day_num: int, month_num: int, year_num: int) -> None:
     with open(parent_folder + '/data/trip_advisor/links_ta.json', 'w', encoding='utf-8') as f:
         json.dump({'restaurants': links}, f, ensure_ascii=False)
         f.close()
+
+
+scrap_links(23, 4, 2023)

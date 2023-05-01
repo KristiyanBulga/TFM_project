@@ -1,0 +1,95 @@
+service: trip-advisor
+
+frameworkVersion: "=3.28.1"
+
+package:
+  patterns:
+    - '!./**'
+    - 'functions/**'
+    - 'utils/**'
+
+custom:
+  defaultStage: dev
+  defaultRegion: us-east-1
+  stage: ${opt:stage, self:custom.defaultStage}
+  region: ${opt:region, self:custom.defaultRegion}
+  timezone: 13
+  taBucket: ${self:service}-${self:custom.stage}
+  taQueue: ${self:service}-queue-${self:custom.stage}
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: ${self:custom.region}
+  stage: ${self:custom.stage}
+  environment:
+    region: ${self:custom.region}
+    stage: ${self:custom.stage}
+  ecr:
+    images:
+      ta_img:
+        path: "./"
+        platform: linux/amd64
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:ListBucket
+          Resource:
+            - arn:aws:s3:::${self.custom.ta-bucket}*
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource:
+            - { "Fn::GetAtt": [ TripAdvisorScrapRestaurantInfo, Arn ] }
+
+functions:
+  get-restaurants:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: Obtains all the restaurants links for a specific region
+    timeout: 900
+    memorySize: 2048
+    image:
+      name: ta_img
+      command:
+        - functions.get_restaurants.handler
+    events:
+      - schedule:
+          name: get-ta-restaurants-links
+          description: 'Invoke lambda to obtain all the restaurants links from trip advisor'
+          rate: cron(0 12 ? * FRI *)
+          enabled: false
+
+#  restaurants-to-sqs:
+#    handler: functions/trip_advisor/restaurants_scheduler.handler
+#    timeout: 900
+#    events:
+#      - schedule:
+#          name: schedule-ta-restaurant-data-obtaining
+#          description: 'Invoke lambda that adds each restaurant to a queue'
+#          rate: cron(0 $self:custom.timezone ? * SAT *)
+#          enabled: false
+
+#  get-restaurant-data:
+#    handler: functions/trip_advisor/get_restaurant_data.handler
+#    timeout: 900
+#    reservedConcurrency: 2
+#    events:
+#      - sqs:
+#          arn: { "Fn::GetAtt": [ TripAdvisorScrapRestaurantInfo, Arn ] }
+
+resources:
+  Resources:
+    TripAdvisorScrapRestaurantInfo:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.taQueue}
+        MessageRetentionPeriod: 518400  # 6 days
+        VisibilityTimeout: 5400  # 6 times the timeout of lambda
+    TripAdvisorBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.taBucket}
