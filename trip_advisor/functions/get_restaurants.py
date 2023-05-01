@@ -1,19 +1,16 @@
 import time
+import boto3
 import logging
-from tempfile import mkdtemp
 from datetime import datetime, timedelta
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
-from utils.helper import store_in_s3_bucket, CHROMIUM_PATH, CHROMEDRIVER_PATH
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from utils.helper import store_in_s3_bucket, set_chrome_options, CHROMEDRIVER_PATH
 
-import boto3
-
+logging.getLogger().setLevel(logging.INFO)
 ta_bucket = "trip-advisor-dev"
-
+places_db_table = "trip-advisor-place-links-db"
 month_code = {1: "ene", 2: "feb", 3: "mar", 4: "abr", 5: "may", 6: "jun", 7: "jul", 8: "ago", 9: "sept", 10: "oct",
               11: "nov", 12: "dic"}
 
@@ -25,73 +22,37 @@ def handler(event, context) -> None:
     context: month of the year
     Returns: None
     """
-    options = Options()
-    options.binary_location = CHROMIUM_PATH
-    options.add_argument('--autoplay-policy=user-gesture-required')
-    options.add_argument('--disable-background-networking')
-    options.add_argument('--disable-background-timer-throttling')
-    options.add_argument('--disable-backgrounding-occluded-windows')
-    options.add_argument('--disable-breakpad')
-    options.add_argument('--disable-client-side-phishing-detection')
-    options.add_argument('--disable-component-update')
-    options.add_argument('--disable-default-apps')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--disable-domain-reliability')
-    options.add_argument('--disable-extensions')
-    options.add_argument('--disable-features=AudioServiceOutOfProcess')
-    options.add_argument('--disable-hang-monitor')
-    options.add_argument('--disable-ipc-flooding-protection')
-    options.add_argument('--disable-notifications')
-    options.add_argument('--disable-offer-store-unmasked-wallet-cards')
-    options.add_argument('--disable-popup-blocking')
-    options.add_argument('--disable-print-preview')
-    options.add_argument('--disable-prompt-on-repost')
-    options.add_argument('--disable-renderer-backgrounding')
-    options.add_argument('--disable-setuid-sandbox')
-    options.add_argument('--disable-speech-api')
-    options.add_argument('--disable-sync')
-    options.add_argument('--disk-cache-size=33554432')
-    options.add_argument('--hide-scrollbars')
-    options.add_argument('--ignore-gpu-blacklist')
-    options.add_argument('--ignore-certificate-errors')
-    options.add_argument('--metrics-recording-only')
-    options.add_argument('--mute-audio')
-    options.add_argument('--no-default-browser-check')
-    options.add_argument('--no-first-run')
-    options.add_argument('--no-pings')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--no-zygote')
-    options.add_argument('--password-store=basic')
-    options.add_argument('--use-gl=swiftshader')
-    options.add_argument('--use-mock-keychain')
-    options.add_argument('--single-process')
-    options.add_argument('--headless')
-    options.add_argument('--window-size=1920x1080')
+    dynamodb = boto3.client('dynamodb')
 
-    options.add_argument('--user-data-dir={}'.format('/tmp/user-data'))
-    options.add_argument('--data-path={}'.format('/tmp/data-path'))
-    options.add_argument('--homedir={}'.format('/tmp'))
-    options.add_argument('--disk-cache-dir={}'.format('/tmp/cache-dir'))
+    ta_id = event.get("trip_advisor_place_id", None)
+    if ta_id is None:
+        logging.error("missing trip_advisor_place_id variable in the event")
+        return
+    logging.info(f"Obtained trip_advisor URL for place id: {ta_id}")
 
-    caps = DesiredCapabilities().CHROME
-    # caps["pageLoadStrategy"] = "normal"  # complete
-    caps["pageLoadStrategy"] = "eager"  # interactive
-    # caps["pageLoadStrategy"] = "none"
+    response = dynamodb.get_item(
+        Key={
+            'ta_id': {
+                'S': ta_id
+            }
+        },
+        TableName=places_db_table
+    )
+    ta_place_link = response.get("Item", {}).get('link', None)
+    if ta_place_link is None:
+        logging.error(f"{ta_id} link could not be found in the {places_db_table} table")
+        return
 
-    driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options, desired_capabilities=caps)
+    options = set_chrome_options()
+    driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
 
     today = datetime.today()
     tomorrow = today + timedelta(days=1)
     day_num, month_num, year_num = tomorrow.day, tomorrow.month, tomorrow.year
-    image_name = f'{year_num}-{month_num}-{day_num}-{today.hour}-{today.minute}'
-    s3_client = boto3.client('s3', region_name='us-east-1')
 
     # load page
-    driver.get("https://www.tripadvisor.es/Restaurants-g187486-Albacete_Province_of_Albacete_Castile_La_Mancha.html")
+    driver.get(ta_place_link.get('S', None))
     time.sleep(5)
-    path_file = f'/tmp/{image_name}_01_first_load.png'
-    driver.save_screenshot(path_file)
-    s3_client.upload_file(path_file, ta_bucket, f"testing/{image_name}_01_first_load.png")
 
     # accept cookies
     try:
@@ -130,17 +91,9 @@ def handler(event, context) -> None:
     select.select_by_value('1')
     time.sleep(3)
 
-    path_file = f'/tmp/{image_name}_02_before_button.png'
-    driver.save_screenshot(path_file)
-    s3_client.upload_file(path_file, ta_bucket, f"testing/{image_name}_02_before_button.png")
-
     # push search button
     driver.find_element(By.ID, 'RESTAURANT_SEARCH_BTN').click()
     time.sleep(10)
-
-    path_file = f'/tmp/{image_name}_03_after_button.png'
-    driver.save_screenshot(path_file)
-    s3_client.upload_file(path_file, ta_bucket, f"testing/{image_name}_03_after_button.png")
 
     # GET BASIC INFO OF THE RESTAURANTS
     restaurants_per_page = 30
@@ -165,16 +118,13 @@ def handler(event, context) -> None:
         if i < int(num_restaurants)//restaurants_per_page:
             pages_links.find_element(By.XPATH, "//a[normalize-space()="+str(i+2)+"]").click()
             time.sleep(10)
-            path_file = f'/tmp/{image_name}_04_page_{i+2}.png'
-            driver.save_screenshot(path_file)
-            s3_client.upload_file(path_file, ta_bucket, f"testing/{image_name}_04_page_{i+2}.png")
 
     driver.close()
     driver.quit()
     logging.info("Obtained all links. Storing file to S3")
 
     # Write in a file all the data
-    filename = f"ta_restaurants_links_{today.strftime('%Y%m%d%H%M%S')}"
+    filename = f"ta00_restaurants_links_{today.strftime('%Y%m%d%H%M%S')}"
     s3_path = f"raw_data/links/{today.strftime('%Y/%m/%d')}"
     store_in_s3_bucket(ta_bucket, s3_path, links, filename)
     logging.info("Process finished")

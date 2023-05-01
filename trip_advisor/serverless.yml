@@ -44,7 +44,18 @@ provider:
           Action:
             - sqs:SendMessage
           Resource:
-            - { "Fn::GetAtt": [ TripAdvisorScrapRestaurantInfo, Arn ] }
+            - "Fn::GetAtt": [ TripAdvisorScrapRestaurantInfo, Arn ]
+        - Effect: Allow
+          Action:
+#            - dynamodb:DescribeTable
+            - dynamodb:Query
+#            - dynamodb:Scan
+            - dynamodb:GetItem
+#            - dynamodb:PutItem
+#            - dynamodb:UpdateItem
+#            - dynamodb:DeleteItem
+          Resource:
+            - "Fn::GetAtt": [ TripAdvisorPlaceLinkDB, Arn ]
 
 functions:
   get-restaurants:
@@ -62,6 +73,8 @@ functions:
           description: 'Invoke lambda to obtain all the restaurants links from trip advisor'
           rate: cron(0 1 ? * SAT *)
           enabled: false
+          input:
+            trip_advisor_place_id: g187486
 
 #  restaurants-to-sqs:
 #    handler: functions/trip_advisor/restaurants_scheduler.handler
@@ -93,3 +106,14 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.taBucket}
+    TripAdvisorPlaceLinkDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: trip-advisor-place-links-db
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: ta_id
+        AttributeDefinitions:
+          - AttributeName: ta_id
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
