@@ -60,7 +60,7 @@ functions:
       - schedule:
           name: get-ta-restaurants-links
           description: 'Invoke lambda to obtain all the restaurants links from trip advisor'
-          rate: cron(0 12 ? * FRI *)
+          rate: cron(0 1 ? * SAT *)
           enabled: false
 
 #  restaurants-to-sqs:

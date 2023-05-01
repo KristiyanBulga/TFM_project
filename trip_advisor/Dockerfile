@@ -1,9 +1,9 @@
 FROM public.ecr.aws/lambda/python:3.9 as build
 RUN yum install -y unzip && \
-    curl -Lo "/tmp/chromedriver.zip" "https://chromedriver.storage.googleapis.com/111.0.5563.64/chromedriver_linux64.zip" && \
-    curl -Lo "/tmp/chrome-linux.zip" "https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F1097615%2Fchrome-linux.zip?alt=media" && \
+    curl -Lo "/tmp/chromedriver.zip" "https://chromedriver.storage.googleapis.com/86.0.4240.22/chromedriver_linux64.zip" && \
+    curl -Lo "/tmp/headless-chromium.zip" "https://github.com/adieuadieu/serverless-chrome/releases/download/v1.0.0-57/stable-headless-chromium-amazonlinux-2.zip" && \
     unzip /tmp/chromedriver.zip -d /opt/ && \
-    unzip /tmp/chrome-linux.zip -d /opt/
+    unzip /tmp/headless-chromium.zip -d /opt/
 
 FROM public.ecr.aws/lambda/python:3.9
 RUN yum install atk cups-libs gtk3 libXcomposite alsa-lib \
@@ -12,7 +12,7 @@ RUN yum install atk cups-libs gtk3 libXcomposite alsa-lib \
     xorg-x11-xauth dbus-glib dbus-glib-devel -y
 COPY ./requirements.txt .
 RUN pip install --force-reinstall -r requirements.txt
-COPY --from=build /opt/chrome-linux /opt/chrome
+COPY --from=build /opt/headless-chromium /opt/
 COPY --from=build /opt/chromedriver /opt/
 COPY ./functions ./functions
 COPY ./utils ./utils
