@@ -44,23 +44,26 @@ provider:
           Action:
             - sqs:SendMessage
           Resource:
-            - "Fn::GetAtt": [ TripAdvisorScrapRestaurantInfo, Arn ]
+            - "Fn::GetAtt": [ TripAdvisorRestaurantsDataQueue, Arn ]
         - Effect: Allow
           Action:
-#            - dynamodb:DescribeTable
             - dynamodb:Query
-#            - dynamodb:Scan
             - dynamodb:GetItem
-#            - dynamodb:PutItem
-#            - dynamodb:UpdateItem
-#            - dynamodb:DeleteItem
+          Resource:
+            - "Fn::GetAtt": [ TripAdvisorPlaceLinkDB, Arn ]
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
           Resource:
             - "Fn::GetAtt": [ TripAdvisorPlaceLinkDB, Arn ]
 
 functions:
   get-restaurants:
     role: arn:aws:iam::992675252360:role/LabRole
-    description: Obtains all the restaurants links for a specific region
+    description: Obtains all the restaurants links for a specific place
     timeout: 900
     memorySize: 2048
     image:
@@ -72,7 +75,7 @@ functions:
           name: get-ta-restaurants-links
           description: 'Invoke lambda to obtain all the restaurants links from trip advisor'
           rate: cron(0 1 ? * SAT *)
-          enabled: false
+          enabled: true
           input:
             trip_advisor_place_id: g187486
 
@@ -86,17 +89,32 @@ functions:
 #          rate: cron(0 $self:custom.timezone ? * SAT *)
 #          enabled: false
 
-#  get-restaurant-data:
+  get-restaurant-data:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: Obtains the restaurants data from trip advisor page
+    timeout: 900
+    memorySize: 2048
+    image:
+      name: ta_img
+      command:
+        - functions.get_restaurant_data.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - TripAdvisorRestaurantsDataQueue
+              - Arn
+
 #    handler: functions/trip_advisor/get_restaurant_data.handler
 #    timeout: 900
 #    reservedConcurrency: 2
 #    events:
 #      - sqs:
-#          arn: { "Fn::GetAtt": [ TripAdvisorScrapRestaurantInfo, Arn ] }
+#          arn: { "Fn::GetAtt": [ TripAdvisorRestaurantsDataQueue, Arn ] }
 
 resources:
   Resources:
-    TripAdvisorScrapRestaurantInfo:
+    TripAdvisorRestaurantsDataQueue:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:custom.taQueue}
@@ -112,8 +130,34 @@ resources:
         TableName: trip-advisor-place-links-db
         KeySchema:
           - KeyType: HASH
-            AttributeName: ta_id
+            AttributeName: ta_place_id
         AttributeDefinitions:
-          - AttributeName: ta_id
+          - AttributeName: ta_place_id
             AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+    RestaurantsDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: restaurants-db
+        AttributeDefinitions:
+          - AttributeName: ta_place_id
+            AttributeType: S
+          - AttributeName: ta_restaurant_id
+            AttributeType: S
+          - AttributeName: valid
+            AttributeType: S
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: ta_place_id
+          - KeyType: RANGE
+            AttributeName: ta_restaurant_id
+        GlobalSecondaryIndexes:
+          - IndexName: ValidRestaurants
+            KeySchema:
+              - AttributeName: ta_place_id
+                KeyType: HASH
+              - AttributeName: valid
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST

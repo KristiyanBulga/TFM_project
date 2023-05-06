@@ -5,11 +5,12 @@ import os
 from selenium.webdriver.chrome.options import Options
 
 region = "eu-west-1"
+ta_bucket = "trip-advisor-dev"
 CHROMEDRIVER_PATH = "/opt/chromedriver"
 CHROMIUM_PATH = "/opt/headless-chromium"
 
 
-def _data_to_file(data, filename, extension="json"):
+def _data_to_file(data, filename, extension):
     path = "/tmp/"
     filename_w_extension = filename
     if extension == "json":
@@ -22,9 +23,9 @@ def _data_to_file(data, filename, extension="json"):
     return None, filename
 
 
-def store_in_s3_bucket(bucket, s3_path, data, filename):
+def store_in_s3_bucket(bucket, s3_path, data, filename, extension="json"):
     s3_client = boto3.client('s3', region_name=region)
-    path_file, filename_w_extension = _data_to_file(data, filename)
+    path_file, filename_w_extension = _data_to_file(data, filename, extension)
     if path_file is None:
         logging.error("File extension selected is not available. Aborting saving")
         return

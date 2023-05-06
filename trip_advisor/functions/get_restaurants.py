@@ -6,10 +6,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
-from utils.helper import store_in_s3_bucket, set_chrome_options, CHROMEDRIVER_PATH
+from utils.helper import store_in_s3_bucket, set_chrome_options, CHROMEDRIVER_PATH, ta_bucket
 
 logging.getLogger().setLevel(logging.INFO)
-ta_bucket = "trip-advisor-dev"
 places_db_table = "trip-advisor-place-links-db"
 month_code = {1: "ene", 2: "feb", 3: "mar", 4: "abr", 5: "may", 6: "jun", 7: "jul", 8: "ago", 9: "sept", 10: "oct",
               11: "nov", 12: "dic"}
@@ -24,23 +23,23 @@ def handler(event, context) -> None:
     """
     dynamodb = boto3.client('dynamodb')
 
-    ta_id = event.get("trip_advisor_place_id", None)
-    if ta_id is None:
+    ta_place_id = event.get("trip_advisor_place_id", None)
+    if ta_place_id is None:
         logging.error("missing trip_advisor_place_id variable in the event")
         return
-    logging.info(f"Obtained trip_advisor URL for place id: {ta_id}")
+    logging.info(f"Obtained trip_advisor URL for place id: {ta_place_id}")
 
     response = dynamodb.get_item(
         Key={
-            'ta_id': {
-                'S': ta_id
+            'ta_place_id': {
+                'S': ta_place_id
             }
         },
         TableName=places_db_table
     )
     ta_place_link = response.get("Item", {}).get('link', None)
     if ta_place_link is None:
-        logging.error(f"{ta_id} link could not be found in the {places_db_table} table")
+        logging.error(f"{ta_place_id} link could not be found in the {places_db_table} table")
         return
 
     options = set_chrome_options()
@@ -124,7 +123,7 @@ def handler(event, context) -> None:
     logging.info("Obtained all links. Storing file to S3")
 
     # Write in a file all the data
-    filename = f"ta00_restaurants_links_{today.strftime('%Y%m%d%H%M%S')}"
+    filename = f"ta_restaurants_links_{ta_place_id}_{today.strftime('%Y%m%d%H%M%S')}"
     s3_path = f"raw_data/links/{today.strftime('%Y/%m/%d')}"
     store_in_s3_bucket(ta_bucket, s3_path, links, filename)
     logging.info("Process finished")
