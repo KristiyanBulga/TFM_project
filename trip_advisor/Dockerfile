@@ -14,5 +14,6 @@ COPY ./requirements.txt .
 RUN pip install --force-reinstall -r requirements.txt
 COPY --from=build /opt/headless-chromium /opt/
 COPY --from=build /opt/chromedriver /opt/
-COPY ./functions ./functions
+COPY ./functions/get_restaurants.py ./functions/get_restaurants.py
+COPY ./functions/get_restaurant_data.py ./functions/get_restaurant_data.py
 COPY ./utils ./utils

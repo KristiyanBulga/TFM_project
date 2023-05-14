@@ -4,8 +4,8 @@ import json
 import os
 from selenium.webdriver.chrome.options import Options
 
-region = "eu-west-1"
-ta_bucket = "trip-advisor-dev"
+region = "us-east-1"
+ta_bucket = f"trip-advisor-{os.environ['stage']}"
 CHROMEDRIVER_PATH = "/opt/chromedriver"
 CHROMIUM_PATH = "/opt/headless-chromium"
 
@@ -17,7 +17,7 @@ def _data_to_file(data, filename, extension):
         filename_w_extension += ".json"
         path += filename_w_extension
         with open(path, 'w', encoding='utf-8') as f:
-            json.dump({"restaurants": data}, f, ensure_ascii=False)
+            json.dump(data, f, ensure_ascii=False)
             f.close()
         return path, filename_w_extension
     return None, filename
@@ -75,7 +75,7 @@ def set_chrome_options() -> Options:
     options.add_argument('--use-mock-keychain')
     options.add_argument('--single-process')
     options.add_argument('--headless')
-    options.add_argument('--window-size=1920x1080')
+    options.add_argument('start-maximized')
     options.add_argument('--user-data-dir={}'.format('/tmp/user-data'))
     options.add_argument('--data-path={}'.format('/tmp/data-path'))
     options.add_argument('--homedir={}'.format('/tmp'))

@@ -1,3 +1,4 @@
+import os
 import time
 import boto3
 import logging
@@ -9,7 +10,6 @@ from selenium.common.exceptions import NoSuchElementException
 from utils.helper import store_in_s3_bucket, set_chrome_options, CHROMEDRIVER_PATH, ta_bucket
 
 logging.getLogger().setLevel(logging.INFO)
-places_db_table = "trip-advisor-place-links-db"
 month_code = {1: "ene", 2: "feb", 3: "mar", 4: "abr", 5: "may", 6: "jun", 7: "jul", 8: "ago", 9: "sept", 10: "oct",
               11: "nov", 12: "dic"}
 
@@ -27,8 +27,8 @@ def handler(event, context) -> None:
     if ta_place_id is None:
         logging.error("missing trip_advisor_place_id variable in the event")
         return
-    logging.info(f"Obtained trip_advisor URL for place id: {ta_place_id}")
 
+    places_db_table = f"trip-advisor-place-links-db-{os.environ['stage']}"
     response = dynamodb.get_item(
         Key={
             'ta_place_id': {
@@ -41,6 +41,7 @@ def handler(event, context) -> None:
     if ta_place_link is None:
         logging.error(f"{ta_place_id} link could not be found in the {places_db_table} table")
         return
+    logging.info(f"Obtained trip_advisor URL for place id: {ta_place_id}")
 
     options = set_chrome_options()
     driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
@@ -104,7 +105,7 @@ def handler(event, context) -> None:
 
     # Scrap all pages
     for i in range(int(num_restaurants)//restaurants_per_page+1):
-        logging.info(f"Obtaining links from {i*num_restaurants} to {(i+1)*num_restaurants}")
+        logging.info(f"Obtaining links from {i*restaurants_per_page} to {(i+1)*restaurants_per_page}")
         # Scrap info of each restaurant
         restaurant_list = driver.find_element(By.ID, 'component_2')
         all_restaurants = restaurant_list.find_elements(By.CSS_SELECTOR, '.Lwqic.Cj.b')
@@ -123,7 +124,12 @@ def handler(event, context) -> None:
     logging.info("Obtained all links. Storing file to S3")
 
     # Write in a file all the data
-    filename = f"ta_restaurants_links_{ta_place_id}_{today.strftime('%Y%m%d%H%M%S')}"
-    s3_path = f"raw_data/links/{today.strftime('%Y/%m/%d')}"
-    store_in_s3_bucket(ta_bucket, s3_path, links, filename)
+    today_iso = today.isocalendar()
+    data = {
+        "restaurants": links,
+        "datetime": today.strftime("%Y/%m/%d, %H:%M:%S")
+    }
+    filename = f"ta_restaurants_links_{ta_place_id}_{today.strftime('%Y_%m_%d_%H_%M_%S')}"
+    s3_path = f"raw_data/links/{ta_place_id}/{today_iso.year}/{today_iso.week}"
+    store_in_s3_bucket(ta_bucket, s3_path, data, filename)
     logging.info("Process finished")

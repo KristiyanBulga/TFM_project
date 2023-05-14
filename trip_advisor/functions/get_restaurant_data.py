@@ -1,6 +1,9 @@
 import re
+import os
 import time
+import json
 import boto3
+import botocore
 import logging
 from datetime import datetime
 from selenium import webdriver
@@ -18,13 +21,19 @@ def handler(event, context) -> None:
     Scrap the restaurant data from trip-advisor
     """
     for request in event.get("Records", []):
-        body = request.get("body", {})
+        body = json.loads(request.get("body", "{}"))
         info = dict()
+        logging.info(f"Event body: {body}")
 
         ta_link = body.get("link", None)
         if ta_link is None:
             logging.error("Could not find a link to obtain data from trip advisor")
             return
+
+        if body.get("trip_advisor_complete_id", None) is not None:
+            restaurant_id_ta = body["trip_advisor_complete_id"]
+        else:
+            restaurant_id_ta = re.search('(?<=Restaurant_Review-)(.*)(?=-Reviews)', ta_link).group(0)
 
         options = set_chrome_options()
         driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
@@ -38,7 +47,7 @@ def handler(event, context) -> None:
             driver.find_element(By.ID, 'onetrust-accept-btn-handler').click()
             time.sleep(5)
         except NoSuchElementException:
-            logging.info("There is not cookies message")
+            logging.info(f"[{restaurant_id_ta}]There is not cookies message")
 
         # get euros symbol
         try:
@@ -202,40 +211,55 @@ def handler(event, context) -> None:
         driver.close()
         driver.quit()
 
-        if body.get("trip_advisor_complete_id", None) is not None:
-            restaurant_id_ta = body["trip_advisor_complete_id"]
-        else:
-            restaurant_id_ta = re.search('(?<=Restaurant_Review-)(.*)(?=-Reviews)', ta_link).group(0)
-        logging.info(f"Obtained all info for {restaurant_id_ta} restaurant. Storing file to S3")
+        logging.info(f"[{restaurant_id_ta}] Obtained all restaurant info. Storing file to S3")
 
         today = datetime.today()
+        today_iso = today.isocalendar()
+        ids = restaurant_id_ta.split('-')
         # Write in a file all the data
-        data_to_store = {'ta_restaurant': {"link": ta_link,
-                                           "name": body.get("restaurant_name", restaurant_id_ta),
-                                           "data": info}}
-        filename = f"{restaurant_id_ta}_{today.strftime('%H%M%S')}"
-        s3_path = f"raw_data/restaurants/{today.strftime('%Y/%m/%d')}"
+        data_to_store = {
+            'ta_restaurant': {
+                "link": ta_link,
+                "name": body.get("restaurant_name", restaurant_id_ta),
+                "data": info,
+                "datetime": today.strftime("%Y/%m/%d, %H:%M:%S"),
+                "week_obtained_link": body.get("week_obtained_link", f"{today_iso.year}-{today_iso.week}")
+            }
+        }
+        filename = f"{restaurant_id_ta}_{today.strftime('%Y_%m_%d_%H_%M_%S')}"
+        s3_path = f"raw_data/restaurants/{ids[0]}/{ids[1]}/{today_iso.year}/{today_iso.week}"
         store_in_s3_bucket(ta_bucket, s3_path, data_to_store, filename)
-        logging.info(f"Process finished for {restaurant_id_ta}")
+        logging.info(f"[{restaurant_id_ta}] Stored in S3")
 
-        # Update dynamodb information
-        # response = dynamodb.get_item(
-        #     Key={
-        #         'ta_place_id': {
-        #             'S': ta_place_id
-        #         }
-        #     },
-        #     TableName=places_db_table
-        # )
-        # ta_place_link = response.get("Item", {}).get('link', None)
-        # if ta_place_link is None:
-        #     logging.error(f"{ta_place_id} link could not be found in the {places_db_table} table")
-        #     return
-        # table = boto3.resource('dynamodb').Table('my_table')
-        #
-        # table.update_item(
-        #     Key={'ta_place_id': '', 'ta_restaurant_id': ''},
-        #     AttributeUpdates={
-        #         'status': 'complete',
-        #     },
-        # )
+        dynamodb = boto3.client('dynamodb')
+        restaurants_db = f'restaurants-db-{os.environ["stage"]}'
+        try:
+            dynamodb.put_item(
+                TableName=restaurants_db,
+                Item={
+                    'ta_place_id': {'S': ids[0]},
+                    'ta_restaurant_id': {'S': ids[1]},
+                    'is_valid': {'S': 'no'},
+                    'trip_advisor_last_time': {'S': today.strftime("%Y/%m/%d, %H:%M:%S")},
+                    'google_maps_id': {'S': 'not_searched'}
+                },
+                ConditionExpression='attribute_not_exists(ta_place_id) AND attribute_not_exists(ta_restaurant_id)'
+            )
+        except botocore.exceptions.ClientError as e:
+            # Ignore the ConditionalCheckFailedException, bubble up
+            # other exceptions.
+            if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                logging.info(f"[{restaurant_id_ta}] already exists in DB. Proceeding to update values")
+                dynamodb.update_item(
+                    TableName=restaurants_db,
+                    Key={
+                        'ta_place_id': {'S': ids[0]},
+                        'ta_restaurant_id': {'S': ids[1]}
+                    },
+                    UpdateExpression='SET trip_advisor_last_time = :new_date',
+                    ExpressionAttributeValues={
+                        ':new_date': {'S': today.strftime("%Y/%m/%d, %H:%M:%S")}
+                    }
+                )
+
+        logging.info(f"[{restaurant_id_ta}] has been updated in the restaurants-db table")

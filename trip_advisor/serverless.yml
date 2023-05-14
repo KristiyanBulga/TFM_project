@@ -5,7 +5,7 @@ frameworkVersion: "=3.28.1"
 package:
   patterns:
     - '!./**'
-    - 'functions/**'
+    - 'functions/restaurants_scheduler.py'
     - 'utils/**'
 
 custom:
@@ -16,6 +16,8 @@ custom:
   timezone: 13
   taBucket: ${self:service}-${self:custom.stage}
   taQueue: ${self:service}-queue-${self:custom.stage}
+  taRestaurantsPlacesDB: trip-advisor-place-links-db-${self:custom.stage}
+  taRestaurantsDB: restaurants-db-${self:custom.stage}
 
 provider:
   name: aws
@@ -79,21 +81,26 @@ functions:
           input:
             trip_advisor_place_id: g187486
 
-#  restaurants-to-sqs:
-#    handler: functions/trip_advisor/restaurants_scheduler.handler
-#    timeout: 900
-#    events:
-#      - schedule:
-#          name: schedule-ta-restaurant-data-obtaining
-#          description: 'Invoke lambda that adds each restaurant to a queue'
-#          rate: cron(0 $self:custom.timezone ? * SAT *)
-#          enabled: false
+  restaurants-to-sqs:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'For each available link add restaurant to queue for data obtaining'
+    handler: functions/restaurants_scheduler.handler
+    timeout: 900
+    events:
+      - schedule:
+          name: schedule-ta-restaurant-data-obtaining
+          description: 'Invoke lambda that adds each restaurant to a queue'
+          rate: cron(0 3 ? * SAT *)
+          enabled: false
+          input:
+            trip_advisor_place_id: g187486
 
   get-restaurant-data:
     role: arn:aws:iam::992675252360:role/LabRole
     description: Obtains the restaurants data from trip advisor page
     timeout: 900
     memorySize: 2048
+    reservedConcurrency: 5
     image:
       name: ta_img
       command:
@@ -105,29 +112,36 @@ functions:
               - TripAdvisorRestaurantsDataQueue
               - Arn
 
-#    handler: functions/trip_advisor/get_restaurant_data.handler
-#    timeout: 900
-#    reservedConcurrency: 2
-#    events:
-#      - sqs:
-#          arn: { "Fn::GetAtt": [ TripAdvisorRestaurantsDataQueue, Arn ] }
-
 resources:
   Resources:
     TripAdvisorRestaurantsDataQueue:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:custom.taQueue}
-        MessageRetentionPeriod: 518400  # 6 days
+        MessageRetentionPeriod: 259200  # 3 days
         VisibilityTimeout: 5400  # 6 times the timeout of lambda
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - "TripAdvisorDeadLetterQueue"
+              - "Arn"
+          maxReceiveCount: 3
+
+    TripAdvisorDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: trip-advisor-dead-letter-queue-${self:custom.stage}
+        MessageRetentionPeriod: 518400  # 6 days
+
     TripAdvisorBucket:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.taBucket}
+
     TripAdvisorPlaceLinkDB:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: trip-advisor-place-links-db
+        TableName: ${self:custom.taRestaurantsPlacesDB}
         KeySchema:
           - KeyType: HASH
             AttributeName: ta_place_id
@@ -135,16 +149,19 @@ resources:
           - AttributeName: ta_place_id
             AttributeType: S
         BillingMode: PAY_PER_REQUEST
+
     RestaurantsDB:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: restaurants-db
+        TableName: ${self:custom.taRestaurantsDB}
         AttributeDefinitions:
           - AttributeName: ta_place_id
             AttributeType: S
           - AttributeName: ta_restaurant_id
             AttributeType: S
           - AttributeName: valid
+            AttributeType: S
+          - AttributeName: google_maps_id
             AttributeType: S
         KeySchema:
           - KeyType: HASH
@@ -157,6 +174,14 @@ resources:
               - AttributeName: ta_place_id
                 KeyType: HASH
               - AttributeName: valid
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: GoogleMapsIdFinder
+            KeySchema:
+              - AttributeName: ta_place_id
+                KeyType: HASH
+              - AttributeName: google_maps_id
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
