@@ -3,3 +3,5 @@
 extra
 data/trip_advisor/restaurants_ta
 .pyc
+.idea
+.serverless
