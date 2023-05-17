@@ -13,7 +13,6 @@ custom:
   defaultRegion: us-east-1
   stage: ${opt:stage, self:custom.defaultStage}
   region: ${opt:region, self:custom.defaultRegion}
-  timezone: 13
   taBucket: ${self:service}-${self:custom.stage}
   taQueue: ${self:service}-queue-${self:custom.stage}
   taRestaurantsPlacesDB: trip-advisor-place-links-db-${self:custom.stage}
@@ -91,13 +90,13 @@ functions:
           name: schedule-ta-restaurant-data-obtaining
           description: 'Invoke lambda that adds each restaurant to a queue'
           rate: cron(0 3 ? * SAT *)
-          enabled: false
+          enabled: true
           input:
             trip_advisor_place_id: g187486
 
   get-restaurant-data:
     role: arn:aws:iam::992675252360:role/LabRole
-    description: Obtains the restaurants data from trip advisor page
+    description: 'Obtains the restaurants data from trip advisor page'
     timeout: 900
     memorySize: 2048
     reservedConcurrency: 5

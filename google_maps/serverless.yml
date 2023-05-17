@@ -1,0 +1,119 @@
+service: google-maps
+
+frameworkVersion: "=3.28.1"
+
+package:
+  patterns:
+    - '!./**'
+    - 'functions/**'
+    - 'utils/**'
+
+custom:
+  defaultStage: dev
+  defaultRegion: us-east-1
+  stage: ${opt:stage, self:custom.defaultStage}
+  region: ${opt:region, self:custom.defaultRegion}
+  googleMapsBucket: ${self:service}-${self:custom.stage}
+  googleMapsCandidatesDB: ${self:service}-candidates-db-${self:custom.stage}
+  notifyAdminTopic: ${self:service}-notify-admin-topic-${self:custom.stage}
+  googleMapsQueue: ${self:service}-find-id-queue-${self:custom.stage}
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: ${self:custom.region}
+  stage: ${self:custom.stage}
+  environment:
+    region: ${self:custom.region}
+    stage: ${self:custom.stage}
+    GOOGLE_MAPS_NOTIFY_ADMIN_TOPIC_ARN: {Ref: NotifyAdminTopic}
+
+functions:
+  new-restaurants-to-sqs:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'For each new restaurant add to queue for google maps id searching'
+    handler: functions/get_restaurants_for_id.handler
+    timeout: 900
+    events:
+      - schedule:
+          name: schedule-google-maps-restaurant-id-obtaining
+          description: 'Invoke lambda that adds new restaurants to a queue'
+          rate: cron(0 12 ? * SAT *)
+          enabled: true
+          input:
+            trip_advisor_place_id: g187486
+
+  get-restaurant-id:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'Obtains the google maps ID for a trip advisor restaurant'
+    handler: functions/get_google_maps_id.handler
+    environment: ${file(./env.json)}
+    timeout: 900
+    memorySize: 2048
+    reservedConcurrency: 5
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - GoogleMapsFindIdQueue
+              - Arn
+
+resources:
+  Resources:
+    GoogleMapsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.googleMapsBucket}
+
+    GoogleMapsCandidatesDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.googleMapsCandidatesDB}
+        AttributeDefinitions:
+          - AttributeName: ta_place_id
+            AttributeType: S
+          - AttributeName: ta_restaurant_id
+            AttributeType: S
+          - AttributeName: validated
+            AttributeType: S
+          - AttributeName: ts
+            AttributeType: N
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: ta_place_id
+          - KeyType: RANGE
+            AttributeName: ta_restaurant_id
+        GlobalSecondaryIndexes:
+          - IndexName: ValidatedCandidates
+            KeySchema:
+              - AttributeName: validated
+                KeyType: HASH
+              - AttributeName: ts
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    NotifyAdminTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:custom.notifyAdminTopic}
+
+    GoogleMapsFindIdQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.googleMapsQueue}
+        MessageRetentionPeriod: 259200  # 3 days
+        VisibilityTimeout: 5400  # 6 times the timeout of lambda
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - "GoogleMapsDeadLetterQueue"
+              - "Arn"
+          maxReceiveCount: 3
+
+    GoogleMapsDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: google-maps-dead-letter-queue-${self:custom.stage}
+        MessageRetentionPeriod: 518400  # 6 days

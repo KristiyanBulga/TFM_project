@@ -1,5 +1,7 @@
+venv
 .venv
 .env
+env.json
 extra
 data/trip_advisor/restaurants_ta
 .pyc
