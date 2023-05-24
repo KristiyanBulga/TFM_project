@@ -1,3 +1,4 @@
+import datetime
 import time
 import json
 import re
@@ -21,6 +22,8 @@ service = Service(parent_folder + f"/extra/chromedriver.exe")
 
 naming = {"Comida": "score_food", "Servicio": "score_service", "Calidad/precio": "score_price_quality",
           "Atmósfera": "score_atmosphere"}
+months_nums = {"enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6, "julio": 7, "agosto": 8,
+               "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12}
 
 
 def scrap(url: str, res_name: str) -> None:
@@ -198,6 +201,39 @@ def scrap(url: str, res_name: str) -> None:
             info['phone'] = re.search('(?<=tel:)(.*)', link.get_attribute('href')).group(0)
         except:
             pass
+
+    # Comments
+    reviews_list = driver.find_element(By.ID, 'taplc_location_reviews_list_resp_rr_resp_0')
+    reviews = reviews_list.find_elements(By.XPATH, './div/div')
+    reviews_info = []
+    dt_upper = datetime.datetime(2023, 5, 20)
+    # dt_upper = datetime.datetime.now()
+    dt_upper = dt_upper.replace(hour=0, minute=0, second=0, microsecond=0)
+    dt_lower = dt_upper - datetime.timedelta(weeks=1)
+    for row in reviews:
+        rating = 0
+        try:
+            rating = row.find_element(By.CSS_SELECTOR, '.ui_bubble_rating')
+            rating = rating.get_attribute('class').split()[1]
+            rating = float(re.search('(?<=bubble_).*$', rating).group(0))
+            rating = rating / 10
+        except:
+            continue
+        date = row.find_element(By.CSS_SELECTOR, '.ratingDate').get_attribute('title').split()
+        date_review = datetime.datetime(int(date[4]), months_nums[date[2]], int(date[0]))
+        title = row.find_element(By.CSS_SELECTOR, '.noQuotes').get_attribute('innerHTML')
+        text_html = row.find_element(By.CSS_SELECTOR, '.partial_entry')
+        text = text_html.get_attribute('innerHTML')
+        # Parse date and select it
+        if dt_lower <= date_review <= dt_upper:
+            reviews_info.append({
+                "date_review": date_review.strftime('%Y_%m_%d'),
+                "title": title,
+                "text": text,
+                "rating": rating
+            })
+
+    info["reviews"] = reviews_info
 
     id_ta = re.search('(?<=Restaurant_Review-)(.*)(?=-Reviews)', url).group(0)
 
