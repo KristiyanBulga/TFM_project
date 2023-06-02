@@ -11,9 +11,10 @@ logging.getLogger().setLevel(logging.INFO)
 candidates_db = f'google-maps-candidates-db-{os.environ["stage"]}'
 restaurants_db = f'restaurants-db-{os.environ["stage"]}'
 
+
 def handler(event, context) -> None:
     """
-    Given a trip advisor restaurant obtain the Google Maps id
+    Given a trip advisor restaurant obtain the Google Maps data for that restaurant
     """
     for request in event.get("Records", []):
         body = json.loads(request.get("body", "{}"))

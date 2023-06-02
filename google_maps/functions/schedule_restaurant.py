@@ -8,7 +8,12 @@ from utils.helper import get_from_dynamo_with_index
 logging.getLogger().setLevel(logging.INFO)
 
 
-def schedule_get_restaurant_for_id(ta_place_id):
+def schedule_get_restaurant_for_id(ta_place_id: str):
+    """
+    This function is in charge of detecting all the restaurants that are new in the dynamoDB and to send a message to
+    the corresponding queue to obtain the Google Maps ID of these restaurants
+    :param ta_place_id: the tripadvisor place ID
+    """
     # obtain list of restaurants
     restaurants_db = f'restaurants-db-{os.environ["stage"]}'
     index_name = 'GoogleMapsIdFinder'
@@ -44,7 +49,12 @@ def schedule_get_restaurant_for_id(ta_place_id):
         logging.info(f"Added to queue {sqs_queue_name}: {ta_place_id}-{ta_restaurant_id}")
 
 
-def schedule_get_restaurant_for_data(ta_place_id):
+def schedule_get_restaurant_for_data(ta_place_id: str):
+    """
+    This function is in charge of detecting all the trip advisor restaurants that have are validated by Google Maps and
+    add them to the corresponding queue to obtain data from the Google Maps API
+    :param ta_place_id: the tripadvisor place ID
+    """
     # obtain list of restaurants
     restaurants_db = f'restaurants-db-{os.environ["stage"]}'
     index_name = 'ValidRestaurants'
@@ -82,7 +92,10 @@ def schedule_get_restaurant_for_data(ta_place_id):
 
 def handler(event, context) -> None:
     """
-    For each trip advisor restaurant, add to queue to obtain Google Maps id
+    For each trip advisor restaurant, add to queue to obtain Google Maps information:
+    :param event: This parameter must contain the trip_advisor_place_id and the data_to_obtain (if it is requested the
+    id of the restaurant or the data)
+    :param context: not in use
     """
     # get event data
     ta_place_id = event.get("trip_advisor_place_id", None)
