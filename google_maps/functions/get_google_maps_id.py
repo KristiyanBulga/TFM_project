@@ -128,6 +128,7 @@ def handler(event, context) -> None:
             ## Send to SQS topic --> Notify administrator that a conflict was found
             sns = boto3.client('sns')
             logging.info("Notifying through SNS topic")
+            item["custom_message"] = "error, google maps, id obtain"
             sns.publish(
                 TopicArn=os.environ.get('GOOGLE_MAPS_NOTIFY_ADMIN_TOPIC_ARN'),
                 Message=json.dumps(item)

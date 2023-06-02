@@ -17,6 +17,7 @@ custom:
   googleMapsCandidatesDB: ${self:service}-candidates-db-${self:custom.stage}
   notifyAdminTopic: ${self:service}-notify-admin-topic-${self:custom.stage}
   googleMapsQueue: ${self:service}-find-id-queue-${self:custom.stage}
+  googleMapsGetDataQueue: ${self:service}-get-data-queue-${self:custom.stage}
 
 provider:
   name: aws
@@ -32,16 +33,25 @@ functions:
   new-restaurants-to-sqs:
     role: arn:aws:iam::992675252360:role/LabRole
     description: 'For each new restaurant add to queue for google maps id searching'
-    handler: functions/get_restaurants_for_id.handler
+    handler: functions/schedule_restaurant.handler
     timeout: 900
     events:
       - schedule:
           name: schedule-google-maps-restaurant-id-obtaining
-          description: 'Invoke lambda that adds new restaurants to a queue'
+          description: 'Invoke lambda that adds restaurants to a queue for id obtaining'
           rate: cron(0 12 ? * SAT *)
           enabled: true
           input:
             trip_advisor_place_id: g187486
+            data_to_obtain: restaurant_id
+      - schedule:
+          name: schedule-google-maps-restaurant-data-obtaining
+          description: 'Invoke lambda that adds restaurants to a queue for data obtaining'
+          rate: cron(0 14 ? * SAT *)
+          enabled: true
+          input:
+            trip_advisor_place_id: g187486
+            data_to_obtain: restaurant_data
 
   get-restaurant-id:
     role: arn:aws:iam::992675252360:role/LabRole
@@ -58,6 +68,23 @@ functions:
           arn:
             Fn::GetAtt:
               - GoogleMapsFindIdQueue
+              - Arn
+
+  get-restaurant-data:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'Obtains the restaurant data using google maps API'
+    handler: functions/get_google_maps_data.handler
+    environment: ${file(./env.json)}
+    timeout: 900
+    memorySize: 2048
+    reservedConcurrency: 5
+    layers:
+      - ${cf:google-maps-layers-${self:custom.stage}.GoogleMapsLayerExport}
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - GoogleMapsGetDataQueue
               - Arn
 
 resources:
@@ -105,6 +132,19 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:custom.googleMapsQueue}
+        MessageRetentionPeriod: 259200  # 3 days
+        VisibilityTimeout: 5400  # 6 times the timeout of lambda
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - "GoogleMapsDeadLetterQueue"
+              - "Arn"
+          maxReceiveCount: 2
+
+    GoogleMapsGetDataQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.googleMapsGetDataQueue}
         MessageRetentionPeriod: 259200  # 3 days
         VisibilityTimeout: 5400  # 6 times the timeout of lambda
         RedrivePolicy:

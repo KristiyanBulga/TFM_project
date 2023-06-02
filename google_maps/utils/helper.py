@@ -1,10 +1,30 @@
 import boto3
 import botocore
-import logging
 import json
+import logging
 import os
 
+region = "us-east-1"
 dynamodb = boto3.client('dynamodb')
+google_maps_bucket = f"google-maps-bucket-{os.environ['stage']}"
+basic_fields = ["address_components", "adr_address", "business_status", "formatted_address", "geometry", "icon", "name",
+                "place_id", "photo", "place_id", "plus_code", "type", "url", "utc_offset", "vicinity",
+                "wheelchair_accessible_entrance"]
+contact_fields = ["current_opening_hours", "formatted_phone_number", "international_phone_number", "opening_hours",
+                  "secondary_opening_hours", "website"]
+atmosphere_fields = ["curbside_pickup", "delivery", "dine_in", "editorial_summary", "price_level", "rating",
+                     "reservable", "reviews", "serves_beer", "serves_breakfast", "serves_brunch", "serves_dinner",
+                     "serves_lunch", "serves_vegetarian_food", "serves_wine", "takeout", "user_ratings_total"]
+
+
+def get_from_dynamo_with_index(table_name, index_name, key_cond_expr, expr_attr):
+    response = dynamodb.query(
+        TableName=table_name,
+        IndexName=index_name,
+        KeyConditionExpression=key_cond_expr,
+        ExpressionAttributeValues=expr_attr
+    )
+    return response.get('Items')
 
 
 def store_in_dynamo(table_name: str, item: dict, condition_exp:str=None) -> None:
