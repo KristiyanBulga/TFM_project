@@ -13,7 +13,7 @@ custom:
   defaultRegion: us-east-1
   stage: ${opt:stage, self:custom.defaultStage}
   region: ${opt:region, self:custom.defaultRegion}
-  googleMapsBucket: ${self:service}-${self:custom.stage}
+  googleMapsBucketName: ${self:service}-bucket-${self:custom.stage}
   googleMapsCandidatesDB: ${self:service}-candidates-db-${self:custom.stage}
   notifyAdminTopic: ${self:service}-notify-admin-topic-${self:custom.stage}
   googleMapsQueue: ${self:service}-find-id-queue-${self:custom.stage}
@@ -51,6 +51,8 @@ functions:
     timeout: 900
     memorySize: 2048
     reservedConcurrency: 5
+    layers:
+      - ${cf:google-maps-layers-${self:custom.stage}.GoogleMapsLayerExport}
     events:
       - sqs:
           arn:
@@ -63,7 +65,7 @@ resources:
     GoogleMapsBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: ${self:custom.googleMapsBucket}
+        BucketName: ${self:custom.googleMapsBucketName}
 
     GoogleMapsCandidatesDB:
       Type: AWS::DynamoDB::Table
@@ -75,7 +77,7 @@ resources:
           - AttributeName: ta_restaurant_id
             AttributeType: S
           - AttributeName: validated
-            AttributeType: S
+            AttributeType: N
           - AttributeName: ts
             AttributeType: N
         KeySchema:
@@ -110,7 +112,7 @@ resources:
             Fn::GetAtt:
               - "GoogleMapsDeadLetterQueue"
               - "Arn"
-          maxReceiveCount: 3
+          maxReceiveCount: 2
 
     GoogleMapsDeadLetterQueue:
       Type: AWS::SQS::Queue

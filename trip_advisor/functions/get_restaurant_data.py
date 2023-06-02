@@ -214,7 +214,7 @@ def handler(event, context) -> None:
         reviews_list = driver.find_element(By.ID, 'taplc_location_reviews_list_resp_rr_resp_0')
         reviews = reviews_list.find_elements(By.XPATH, './div/div')
         reviews_info = []
-        dt_upper = datetime.datetime.now()
+        dt_upper = datetime.now()
         dt_upper = dt_upper.replace(hour=0, minute=0, second=0, microsecond=0)
         dt_lower = dt_upper - timedelta(weeks=1)
         for row in reviews:
@@ -273,7 +273,7 @@ def handler(event, context) -> None:
                 Item={
                     'ta_place_id': {'S': ids[0]},
                     'ta_restaurant_id': {'S': ids[1]},
-                    'is_valid': {'S': 'no'},
+                    'valid': {'S': 'no'},
                     'trip_advisor_last_time': {'S': today.strftime("%Y/%m/%d, %H:%M:%S")},
                     'google_maps_id': {'S': 'not_searched'}
                 },

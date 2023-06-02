@@ -35,15 +35,15 @@ def handler(event, context) -> None:
     )
     list_restaurants = response.get('Items')
 
-    logging.info(list_restaurants)
+    logging.info(f"Found {len(list_restaurants)} restaurants")
 
     # Add to queue
     today = datetime.today()
     today_iso = today.isocalendar()
     # add to queue restaurant
     for restaurant in list_restaurants:
-        ta_restaurant_id = restaurant.get("ta_restaurant_id")
-        trip_advisor_last_time = restaurant.get("trip_advisor_last_time")
+        ta_restaurant_id = restaurant.get("ta_restaurant_id", {}).get("S", None)
+        trip_advisor_last_time = restaurant.get("trip_advisor_last_time", {}).get("S", None)
         data = {
             "ta_place_id": ta_place_id,
             "ta_restaurant_id": ta_restaurant_id,
@@ -51,9 +51,8 @@ def handler(event, context) -> None:
             "week_triggered": f"{today_iso.year}-{today_iso.week}"
         }
 
-        sqs_queue_name = f"google-maps-find-id-{os.environ['stage']}"
+        sqs_queue_name = f"google-maps-find-id-queue-{os.environ['stage']}"
         sqs = boto3.resource('sqs')
         queue = sqs.get_queue_by_name(QueueName=sqs_queue_name)
         queue.send_message(MessageBody=json.dumps(data))
-        logging.info(f"Added to queue: {data['trip_advisor_complete_id']}")
-        return
+        logging.info(f"Added to queue: {ta_place_id}-{ta_restaurant_id}")
