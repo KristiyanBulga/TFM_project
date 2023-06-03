@@ -1,7 +1,10 @@
+venv
 .venv
 .env
+env.json
 extra
-data/trip_advisor/restaurants_ta
 .pyc
 .idea
 .serverless
+data/trip_advisor/restaurants_ta
+google_maps/layers

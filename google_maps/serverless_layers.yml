@@ -1,0 +1,39 @@
+service: google-maps-layers
+
+frameworkVersion: "=3.28.1"
+
+plugins:
+  - serverless-scriptable-plugin
+
+custom:
+  defaultStage: dev
+  defaultRegion: us-east-1
+  stage: ${opt:stage, self:custom.defaultStage}
+  region: ${opt:region, self:custom.defaultRegion}
+  scriptable:
+    hooks:
+      before:package:createDeploymentArtifacts:
+        - mkdir .\layers\google-maps-layer\python\lib\python3.9\site-packages
+        - pip install -r requirements.txt -t ./layers/google-maps-layer/python/lib/python3.9/site-packages
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: ${self:custom.region}
+  stage: ${self:custom.stage}
+
+layers:
+  googleMaps:
+    path: layers/google-maps-layer
+    name: google-maps-layer
+    description: contains the necessarily packages to execute the lambdas
+    compatibleRuntimes:
+      - python3.9
+
+resources:
+  Outputs:
+    GoogleMapsLayerExport:
+      Value:
+        Ref: GoogleMapsLambdaLayer
+      Export:
+        Name: GoogleMapsLambdaLayer
