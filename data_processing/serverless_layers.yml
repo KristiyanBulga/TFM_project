@@ -1,0 +1,41 @@
+service: data-center-layers
+
+frameworkVersion: "=3.28.1"
+
+plugins:
+  - serverless-scriptable-plugin
+
+custom:
+  defaultStage: dev
+  defaultRegion: us-east-1
+  stage: ${opt:stage, self:custom.defaultStage}
+  region: ${opt:region, self:custom.defaultRegion}
+  scriptable:
+    hooks:
+      before:package:createDeploymentArtifacts:
+        - mkdir .\layers\data-center-pandas-layer\python\lib\python3.9\site-packages
+        - pip install -r requirements.txt -t ./layers/data-center-pandas-layer/python/lib/python3.9/site-packages
+        - rmdir .\layers\data-center-pandas-layer\python\lib\python3.9\site-packages\numpy-1.22.3.dist-info /s
+        - rmdir .\layers\data-center-pandas-layer\python\lib\python3.9\site-packages\numpy /s
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: ${self:custom.region}
+  stage: ${self:custom.stage}
+
+layers:
+  dataCenterPandas:
+    path: layers/data-center-pandas-layer
+    name: data-center-pandas-layer
+    description: contains the necessarily packages to execute pandas in lambda
+    compatibleRuntimes:
+      - python3.9
+
+resources:
+  Outputs:
+    DataCenterPandasLayerExport:
+      Value:
+        Ref: DataCenterPandasLambdaLayer
+      Export:
+        Name: DataCenterPandasLambdaLayer

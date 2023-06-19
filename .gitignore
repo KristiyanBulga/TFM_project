@@ -8,3 +8,4 @@ extra
 .serverless
 data/trip_advisor/restaurants_ta
 google_maps/layers
+data_processing/layers/
