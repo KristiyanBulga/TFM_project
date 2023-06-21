@@ -23,15 +23,21 @@ provider:
   environment:
     region: ${self:custom.region}
     stage: ${self:custom.stage}
+  ecr:
+    images:
+      data_process_pandas_img:
+        path: "./"
+        platform: linux/amd64
 
 functions:
   process-restaurant-data:
     role: arn:aws:iam::992675252360:role/LabRole
     description: 'Given a place and a platform process all the data obtained'
-    handler: functions/process_data.handler
     timeout: 900
-    layers:
-      - ${cf:data-center-layers-${self:custom.stage}.DataCenterPandasLayerExport}
+    image:
+      name: data_process_pandas_img
+      command:
+        - functions.process_data.handler
     events:
       - schedule:
           name: process-trip-advisor-data

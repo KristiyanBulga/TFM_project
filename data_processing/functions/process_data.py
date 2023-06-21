@@ -6,24 +6,25 @@ from datetime import datetime, date
 from html import unescape
 from utils.helper import buckets, get_from_dynamo_with_index, store_in_s3_bucket, update_item_dynamo, comments_db
 
+logging.getLogger().setLevel(logging.INFO)
 ta_day_conversion = {"lun": "lunes", "mar": "martes", "mié": "miércoles", "jue": "jueves", "vie": "viernes",
                      "sáb": "sábado", "dom": "domingo"}
 
 
 def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_restaurant_id: str):
-    restaurant_k = restaurant_data["restaurant"]
+    logging.info(f"Restaurant {ta_place_id}-{ta_restaurant_id}: processing data from Trip Advisor")
+    restaurant_k = restaurant_data["ta_restaurant"]
     data = restaurant_k["data"]
-    prices = data.get("price", {})
+    prices = data["price"] if data.get("price") is not None else {}
     restaurant_info = {
         "ta_place_id": ta_place_id,
         "ta_restaurant_id": ta_restaurant_id,
         "name": unescape(restaurant_k.get("name", "")),
-        "url": restaurant_k.get("ta_link", ""),
-        "symbol": [s.count('€') for s in data["symbol"].split("-")] if data.get("symbol") is not None else [],
+        "url": restaurant_k.get("link", ""),
+        "symbol": json.dumps([s.count('€') for s in data["symbol"].split("-")] if data.get("symbol") is not None else []),
         "claimed": data.get("claimed", False),
         "price_lower": prices.get("lower"),
         "price_upper": prices.get("upper"),
-        "price_mean": -1,
         "schedule": dict(),
         "score_overall": data.get("score_overall"),
         "score_food": data.get("score_food"),
@@ -35,34 +36,46 @@ def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_resta
         "address": data.get("address", {}).get("name"),
         "webpage": data.get("webpage"),
         "phone": data.get("phone"),
-        "serves_breakfast": "Desayuno" in data.get("meals", []),
-        "serves_brunch": "Brunch" in data.get("meals", []),
-        "serves_lunch": "Comidas" in data.get("meals", []),
-        "serves_dinner": "Cenas" in data.get("meals", []),
+        "serves_breakfast": "Desayuno" in data["meals"] if data.get("meals") is not None else False,
+        "serves_brunch": "Brunch" in data["meals"] if data.get("meals") is not None else False,
+        "serves_lunch": "Comidas" in data["meals"] if data.get("meals") is not None else False,
+        "serves_dinner": "Cenas" in data["meals"] if data.get("meals") is not None else False,
         "tags": dict()
     }
     if restaurant_info["price_lower"] is not None and restaurant_info["price_lower"] is not None:
         restaurant_info["price_mean"] = restaurant_info["price_upper"] - restaurant_info["price_lower"]
-    for day in data.get("schedule", {}).keys():
+    elif restaurant_info["price_lower"] is not None:
+        restaurant_info["price_mean"] = restaurant_info["price_lower"]
+    elif restaurant_info["price_upper"] is not None:
+        restaurant_info["price_mean"] = restaurant_info["price_upper"]
+    else:
+        restaurant_info["price_mean"] = None
+    days = data["schedule"] if data.get("schedule") else {}
+    for day in days.keys():
         restaurant_info["schedule"][ta_day_conversion[day]] = data["schedule"][day]
-    restaurant_info["tags"]["type"] = data.get("type", [])
-    restaurant_info["tags"]["special_diets"] = data.get("special_diets", [])
-    restaurant_info["tags"]["meals"] = data.get("meals", [])
-    restaurant_info["tags"]["advantages"] = data.get("advantages", [])
+    restaurant_info["schedule"] = json.dumps(restaurant_info["schedule"])
+    restaurant_info["tags"]["type"] = data["type"] if data.get("type") is not None else []
+    restaurant_info["tags"]["special_diets"] = data["special_diets"] if data.get("special_diets") is not None else []
+    restaurant_info["tags"]["meals"] = data["meals"] if data.get("meals") is not None else []
+    restaurant_info["tags"]["advantages"] = data["advantages"] if data.get("advantages") is not None else []
+    restaurant_info["tags"] = json.dumps(restaurant_info["tags"])
 
     # Store in a file the reviews
-    for review in data.get("reviews", []):
+    reviews = data.get("reviews", [])
+    logging.info(f"Found {len(reviews)} reviews for {ta_place_id}-{ta_restaurant_id}")
+    for review in reviews:
         date_review = datetime.strptime(review["date_review"], '%Y_%m_%d').date()
         datetime_review = datetime.combine(date_review, datetime.now().time())
         key = {
             'place': {'S': f"{ta_place_id}-{ta_restaurant_id}"},
-            'timestamp': {'N': int(datetime_review.timestamp() * 1000)}
+            'timestamp': {'N': str(int(datetime_review.timestamp() * 1000))}
         }
-        upd_expr = 'SET rvw_rate = :rvw_rate, rvw_title = :rvw_title, rvw_text = :rvw_text'
+        upd_expr = 'SET rate = :rvw_rate, title = :rvw_title, review = :rvw_text, platform =:rvw_platform'
         expression_attr = {
-            ':rvw_rate': {'N': review["rating"]},
+            ':rvw_rate': {'N': str(review["rating"])},
             ':rvw_title': {'S': review["title"]},
-            ':rvw_text': {'S': review["text"]}
+            ':rvw_text': {'S': review["text"]},
+            ':rvw_platform': {'S': "trip_advisor"}
         }
         update_item_dynamo(comments_db, key, upd_expr, expression_attr)
     return restaurant_info
@@ -70,7 +83,6 @@ def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_resta
 
 def _data_process_google_maps(restaurant_data):
     pass
-
 
 def handler(event, context) -> None:
     """
@@ -108,17 +120,18 @@ def handler(event, context) -> None:
     for restaurant in list_restaurants:
         ta_restaurant_id = restaurant.get("ta_restaurant_id", {}).get("S", None)
         s3 = boto3.client('s3')
+        logging.info(f"path: raw_data/restaurants/{ta_place_id}/{ta_restaurant_id}/{today_iso.year}/{today_iso.week}/")
         result = s3.list_objects(Bucket=bucket, Prefix=f'raw_data/restaurants/{ta_place_id}/{ta_restaurant_id}/{today_iso.year}/{today_iso.week}/')
-        first_element = result.get('Contents')[0]
-        data = s3.get_object(Bucket=bucket, Key=first_element.get('Key'))
-        contents = data['Body'].read().decode("utf-8")
-        restaurant_data = json.loads(contents)
-        if platform == "trip_advisor":
-            restaurants_data.append(_data_process_trip_advisor(restaurant_data, ta_place_id, ta_restaurant_id))
-        elif platform == "google_maps":
-            restaurants_data.append(_data_process_google_maps(restaurant_data))
+        if result.get('Contents') is not None:
+            first_element = result.get('Contents')[0]
+            data = s3.get_object(Bucket=bucket, Key=first_element.get('Key'))
+            contents = data['Body'].read().decode("utf-8")
+            restaurant_data = json.loads(contents)
+            if platform == "trip_advisor":
+                restaurants_data.append(_data_process_trip_advisor(restaurant_data, ta_place_id, ta_restaurant_id))
+            elif platform == "google_maps":
+                restaurants_data.append(_data_process_google_maps(restaurant_data))
 
-    # TODO REVISAR
     filename = f"{platform}_{today.strftime('%Y_%m_%d_%H_%M_%S')}"
-    s3_path = f"restaurants/data/place={ta_place_id}/platform={platform}/year={today_iso.year}/week={today_iso.week}"
+    s3_path = f"restaurants/data/place={ta_place_id}/year={today_iso.year}/week={today_iso.week}"
     store_in_s3_bucket(bucket, s3_path, restaurants_data, filename, extension="parquet")

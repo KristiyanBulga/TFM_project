@@ -47,7 +47,7 @@ def _data_to_file(data, filename, extension):
         filename_w_extension += ".parquet"
         path += filename_w_extension
         df = pd.DataFrame(data)
-        df.to_parquet(path, engine='pyarrow', compression='gzip')
+        df.to_parquet(path, engine='pyarrow', use_dictionary=False)
         return path, filename_w_extension
     return None, filename
 
