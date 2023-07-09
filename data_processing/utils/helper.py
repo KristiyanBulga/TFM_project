@@ -3,34 +3,9 @@ import json
 import logging
 import os
 import pandas as pd
+from utils.helper_wo_pandas import *
 
-dynamodb = boto3.client('dynamodb')
-logging.getLogger().setLevel(logging.INFO)
 region = os.environ['region']
-stage = os.environ['stage']
-buckets = {
-    "trip_advisor": f'trip-advisor-{stage}',
-    "google_maps": f'google-maps-bucket-{stage}'
-}
-comments_db = f"comments-db-{stage}"
-
-
-def get_from_dynamo_with_index(table_name: str, index_name: str, key_cond_expr: str, expr_attr: dict) -> list:
-    """
-    This function makes a query to the dynamoDB using the params
-    :param table_name: name of the dynamoDB table
-    :param index_name: name of the index
-    :param key_cond_expr: the condition
-    :param expr_attr: values for the condition expression
-    :return: the list of items from dynamoDB
-    """
-    response = dynamodb.query(
-        TableName=table_name,
-        IndexName=index_name,
-        KeyConditionExpression=key_cond_expr,
-        ExpressionAttributeValues=expr_attr
-    )
-    return response.get('Items')
 
 
 def _data_to_file(data, filename, extension):
@@ -60,12 +35,3 @@ def store_in_s3_bucket(bucket, s3_path, data, filename, extension="json"):
         return
     s3_client.upload_file(path_file, bucket, f"{s3_path}/{filename_w_extension}")
     os.remove(path_file)
-
-
-def update_item_dynamo(table, key, update_expr, expression_attr):
-    dynamodb.update_item(
-        TableName=table,
-        Key=key,
-        UpdateExpression=update_expr,
-        ExpressionAttributeValues=expression_attr
-    )

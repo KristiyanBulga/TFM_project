@@ -14,6 +14,7 @@ custom:
   defaultRegion: us-east-1
   stage: ${opt:stage, self:custom.defaultStage}
   region: ${opt:region, self:custom.defaultRegion}
+  listRestaurantsDataDB: list-restaurants-data-db-${self:custom.stage}
 
 provider:
   name: aws
@@ -32,13 +33,13 @@ functions:
   get-weekly-query:
     role: arn:aws:iam::992675252360:role/LabRole
     description: 'Create the weekly query per place id'
-    handler: functions/weekly_query.handler
+    handler: functions/store_weekly_data.handler
     timeout: 900
     events:
       - schedule:
           name: schedule-weekly-query-obtaining
           description: 'Invoke lambda that creates the weekly query for Albacete'
-          rate: cron(0 12 ? * SAT *)
+          rate: cron(0 5 ? * SUN *)
           enabled: true
           input:
             trip_advisor_place_id: g187486
@@ -55,3 +56,21 @@ functions:
   #        request:
   #          schemas:
   #            application/json: ${file(ass/swagger.yml):components.schemas.AlgoSubmitBody}
+
+resources:
+  Resources:
+    ListRestaurantsDataDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.listRestaurantsDataDB}
+        AttributeDefinitions:
+          - AttributeName: ta_place_id
+            AttributeType: S
+          - AttributeName: ta_restaurant_id
+            AttributeType: S
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: ta_place_id
+          - KeyType: RANGE
+            AttributeName: ta_restaurant_id
+        BillingMode: PAY_PER_REQUEST
