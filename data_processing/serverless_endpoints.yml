@@ -1,0 +1,57 @@
+service: data-endpoints
+
+frameworkVersion: "=3.28.1"
+
+package:
+  patterns:
+    - '!./**'
+    - 'functions/api.py'
+    - 'functions/weekly_query.py'
+    - 'utils/helper.py'
+
+custom:
+  defaultStage: dev
+  defaultRegion: us-east-1
+  stage: ${opt:stage, self:custom.defaultStage}
+  region: ${opt:region, self:custom.defaultRegion}
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: ${self:custom.region}
+  stage: ${self:custom.stage}
+  environment:
+    region: ${self:custom.region}
+    stage: ${self:custom.stage}
+  apiGateway:
+    apiKeys:
+      - name: restaurants-data-${self:custom.stage}
+        description: Api key to obtain restaurant data
+
+functions:
+  get-weekly-query:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'Create the weekly query per place id'
+    handler: functions/weekly_query.handler
+    timeout: 900
+    events:
+      - schedule:
+          name: schedule-weekly-query-obtaining
+          description: 'Invoke lambda that creates the weekly query for Albacete'
+          rate: cron(0 12 ? * SAT *)
+          enabled: true
+          input:
+            trip_advisor_place_id: g187486
+
+  api:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'Router to all endpoints'
+    handler: functions/api.router
+    events:
+      - http:
+          path: /data/combined
+          method: get
+          private: true
+  #        request:
+  #          schemas:
+  #            application/json: ${file(ass/swagger.yml):components.schemas.AlgoSubmitBody}

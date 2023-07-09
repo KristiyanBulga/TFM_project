@@ -5,8 +5,8 @@ frameworkVersion: "=3.28.1"
 package:
   patterns:
     - '!./**'
-    - 'functions/**'
-    - 'utils/**'
+    - 'functions/process_data.py'
+    - 'utils/helper.py'
 
 custom:
   defaultStage: dev
