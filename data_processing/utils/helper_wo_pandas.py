@@ -2,6 +2,7 @@ import boto3
 import json
 import logging
 import os
+from decimal import Decimal
 
 dynamodb = boto3.client('dynamodb')
 logging.getLogger().setLevel(logging.INFO)
@@ -49,7 +50,7 @@ def _data_to_file(data, filename, extension):
         filename_w_extension += ".json"
         path += filename_w_extension
         with open(path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False)
+            json.dump(data, f, ensure_ascii=False, cls=JSONEncoder)
             f.close()
         return path, filename_w_extension
     return None, filename
@@ -67,3 +68,10 @@ def store_in_s3_bucket_wo_pandas(bucket, s3_path, data, filename, extension="jso
 
 def parse_athena_boolean(value: str) -> bool:
     return value == "true"
+
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return json.JSONEncoder.default(self, obj)

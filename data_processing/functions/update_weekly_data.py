@@ -108,9 +108,11 @@ def _get_new_weekly_data(today: datetime, platform: str, ta_place_id: str):
 
 def handler(event, context) -> None:
     """
-    Create the weekly query and store it in S3
+    Update weekly data in dynamoDB
     """
     ta_place_id = event.get("trip_advisor_place_id", None)
+    if not ta_place_id:
+        raise Exception("Trip advisor place ID is not in event")
     if event.get("custom_date", None) is not None:
         today = datetime.strptime(event["custom_date"], "%Y_%m_%d_%H_%M_%S")
     else:
