@@ -3,7 +3,8 @@ import json
 import logging
 import time
 from datetime import datetime
-from utils.helper_wo_pandas import store_in_s3_bucket_wo_pandas, parse_athena_boolean, update_item_dynamo
+from utils.helper_wo_pandas import store_in_s3_bucket_wo_pandas, parse_athena_boolean, update_item_dynamo, \
+    weekly_data_db
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -18,7 +19,7 @@ query_columns = {
                      "serves_brunch", "serves_lunch", "serves_dinner", "tags"],
     "google_maps": ["ta_restaurant_id", "symbol", "score_overall", "serves_lunch", "serves_dinner", "serves_beer",
                     "serves_vegetarian_food", "serves_wine", "takeout", "wheelchair_accessible_entrance", "dine_in",
-                    "deliver", "reservable"]
+                    "delivery", "reservable"]
 }
 
 
@@ -35,27 +36,38 @@ def _get_new_weekly_data(today: datetime, platform: str, ta_place_id: str):
         ResultConfiguration={'OutputLocation': f'{queries_bucket}/{platform}_{today.timestamp()}'}
     )
 
-    # TODO: use get_query_execution to detect if the query has succeded
-    # TODO: create query with maxResults and use next token
+    query_execution = client.get_query_execution(QueryExecutionId=query_trip_advisor['QueryExecutionId'])
+    query_state = query_execution["QueryExecution"]["Status"]["State"]
+    seconds = 60
+    while query_state in ["QUEUED", "RUNNING"] and seconds > 0:
+        time.sleep(1)
+        query_execution = client.get_query_execution(QueryExecutionId=query_trip_advisor['QueryExecutionId'])
+        query_state = query_execution["QueryExecution"]["Status"]["State"]
+        seconds -= 1
 
-    time.sleep(5)
+    if query_state != "SUCCEEDED":
+        logging.error(f"Athena query was aborted in status {query_state}. Query execution: {query_execution}")
+        return
 
     results = client.get_query_results(QueryExecutionId=query_trip_advisor['QueryExecutionId'])
+    logging.info(f'Updating {len(results["ResultSet"]["Rows"][1:])} restaurants')
     for row in results["ResultSet"]["Rows"][1:]:
         data = row["Data"]
         logging.info(data)
         restaurant_id = data[0]["VarCharValue"]
+        expression_attr = dict()
+        upd_expr = ""
         if platform == "trip_advisor":
             expression_attr = {
                 ":restaurant_name": {'S': data[1].get("VarCharValue", "")},
-                ":ta_symbol": {'L': json.loads(data[2].get("VarCharValue", "[]"))},
+                ":ta_symbol": {'S': data[2].get("VarCharValue", "[]")},
                 ":ta_score_overall": {'N': data[3].get("VarCharValue", "-1")},
                 ":ta_travellers_choice": {'BOOL': parse_athena_boolean(data[4].get("VarCharValue", "false"))},
                 ":ta_serves_breakfast": {'BOOL': parse_athena_boolean(data[5].get("VarCharValue", "false"))},
                 ":ta_serves_brunch": {'BOOL': parse_athena_boolean(data[6].get("VarCharValue", "false"))},
                 ":ta_serves_lunch": {'BOOL': parse_athena_boolean(data[7].get("VarCharValue", "false"))},
                 ":ta_serves_dinner": {'BOOL': parse_athena_boolean(data[8].get("VarCharValue", "false"))},
-                ":ta_tags": {'M': json.loads(data[9].get("VarCharValue", "{}"))},
+                ":ta_tags": {'S': data[9].get("VarCharValue", "{}")},
                 ":ta_date": {'S': today.strftime("%Y/%m/%d, %H:%M:%S")}
             }
             upd_expr = 'SET restaurant_name = :restaurant_name, ta_symbol = :ta_symbol, ' + \
@@ -77,19 +89,21 @@ def _get_new_weekly_data(today: datetime, platform: str, ta_place_id: str):
                 ":gm_dine_in": {'BOOL': parse_athena_boolean(data[10].get("VarCharValue", "false"))},
                 ":gm_deliver": {'BOOL': parse_athena_boolean(data[11].get("VarCharValue", "false"))},
                 ":gm_reservable": {'BOOL': parse_athena_boolean(data[12].get("VarCharValue", "false"))},
+                ":gm_date": {'S': today.strftime("%Y/%m/%d, %H:%M:%S")}
             }
             upd_expr = 'SET gm_symbol = :gm_symbol, gm_score_overall = :gm_score_overall, ' + \
                        'gm_serves_lunch = :gm_serves_lunch, gm_serves_dinner = :gm_serves_dinner, ' + \
                        'gm_serves_beer = :gm_serves_beer, gm_serves_vegetarian_food = :gm_serves_vegetarian_food, ' + \
                        'gm_serves_wine = :gm_serves_wine, gm_takeout = :gm_takeout, ' + \
                        'gm_wheelchair_accessible_entrance = :gm_wheelchair_accessible_entrance, ' + \
-                       'gm_dine_in = :gm_dine_in, gm_deliver = :gm_deliver, gm_reservable = :gm_reservable,'
+                       'gm_dine_in = :gm_dine_in, gm_deliver = :gm_deliver, gm_reservable = :gm_reservable, ' \
+                       'gm_date = :gm_date'
 
         key = {
             'ta_place_id': {'S': ta_place_id},
             'ta_restaurant_id': {'S': restaurant_id}
         }
-        update_item_dynamo(comments_db, key, upd_expr, expression_attr)
+        update_item_dynamo(weekly_data_db, key, upd_expr, expression_attr)
 
 
 def handler(event, context) -> None:

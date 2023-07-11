@@ -12,6 +12,7 @@ buckets = {
     "google_maps": f'google-maps-bucket-{stage}'
 }
 comments_db = f"comments-db-{stage}"
+weekly_data_db = f"list-restaurants-data-db-{stage}"
 
 
 def get_from_dynamo_with_index(table_name: str, index_name: str, key_cond_expr: str, expr_attr: dict) -> list:

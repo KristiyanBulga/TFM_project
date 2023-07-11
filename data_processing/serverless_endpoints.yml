@@ -6,8 +6,8 @@ package:
   patterns:
     - '!./**'
     - 'functions/api.py'
-    - 'functions/weekly_query.py'
-    - 'utils/helper.py'
+    - 'functions/update_weekly_data.py'
+    - 'utils/helper_wo_pandas.py'
 
 custom:
   defaultStage: dev
@@ -30,14 +30,14 @@ provider:
         description: Api key to obtain restaurant data
 
 functions:
-  get-weekly-query:
+  update-weekly-data:
     role: arn:aws:iam::992675252360:role/LabRole
     description: 'Create the weekly query per place id'
-    handler: functions/store_weekly_data.handler
+    handler: functions/update_weekly_data.handler
     timeout: 900
     events:
       - schedule:
-          name: schedule-weekly-query-obtaining
+          name: schedule-weekly-data-update
           description: 'Invoke lambda that creates the weekly query for Albacete'
           rate: cron(0 5 ? * SUN *)
           enabled: true
