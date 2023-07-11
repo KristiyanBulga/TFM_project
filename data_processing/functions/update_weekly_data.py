@@ -58,9 +58,11 @@ def _get_new_weekly_data(today: datetime, platform: str, ta_place_id: str):
         expression_attr = dict()
         upd_expr = ""
         if platform == "trip_advisor":
+            symbol_list = json.loads(data[2].get("VarCharValue", "[]"))
+            symbols = sum(symbol_list)/len(symbol_list) if symbol_list else -1
             expression_attr = {
                 ":restaurant_name": {'S': data[1].get("VarCharValue", "")},
-                ":ta_symbol": {'S': data[2].get("VarCharValue", "[]")},
+                ":ta_symbol": {'N': symbols},
                 ":ta_score_overall": {'N': data[3].get("VarCharValue", "-1")},
                 ":ta_travellers_choice": {'BOOL': parse_athena_boolean(data[4].get("VarCharValue", "false"))},
                 ":ta_serves_breakfast": {'BOOL': parse_athena_boolean(data[5].get("VarCharValue", "false"))},
@@ -108,9 +110,11 @@ def _get_new_weekly_data(today: datetime, platform: str, ta_place_id: str):
 
 def handler(event, context) -> None:
     """
-    Create the weekly query and store it in S3
+    Update weekly data in dynamoDB
     """
     ta_place_id = event.get("trip_advisor_place_id", None)
+    if not ta_place_id:
+        raise Exception("Trip advisor place ID is not in event")
     if event.get("custom_date", None) is not None:
         today = datetime.strptime(event["custom_date"], "%Y_%m_%d_%H_%M_%S")
     else:

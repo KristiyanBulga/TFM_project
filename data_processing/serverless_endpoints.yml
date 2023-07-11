@@ -7,6 +7,7 @@ package:
     - '!./**'
     - 'functions/api.py'
     - 'functions/update_weekly_data.py'
+    - 'functions/create_weekly_query.py'
     - 'utils/helper_wo_pandas.py'
 
 custom:
@@ -38,8 +39,22 @@ functions:
     events:
       - schedule:
           name: schedule-weekly-data-update
-          description: 'Invoke lambda that creates the weekly query for Albacete'
+          description: 'Invoke lambda that updates the weekly data in dynamodb Albacete'
           rate: cron(0 5 ? * SUN *)
+          enabled: true
+          input:
+            trip_advisor_place_id: g187486
+
+  create-weekly-query:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'Create the weekly query per place id'
+    handler: functions/create_weekly_query.handler
+    timeout: 900
+    events:
+      - schedule:
+          name: schedule-creation-weekly-query
+          description: 'Invoke lambda that creates the weekly query for Albacete'
+          rate: cron(0 7 ? * SUN *)
           enabled: true
           input:
             trip_advisor_place_id: g187486

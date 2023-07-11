@@ -6,7 +6,7 @@ package:
   patterns:
     - '!./**'
     - 'functions/process_data.py'
-    - 'utils/helper.py'
+    - 'utils/**'
 
 custom:
   defaultStage: dev
