@@ -2,7 +2,7 @@ import json
 import boto3
 import logging
 import os
-from datetime import datetime, date
+from datetime import datetime
 from html import unescape
 from utils.helper import buckets, get_from_dynamo_with_index, store_in_s3_bucket, update_item_dynamo, comments_db
 
