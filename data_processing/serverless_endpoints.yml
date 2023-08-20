@@ -67,7 +67,7 @@ functions:
       - http:
           path: /data/combined
           method: get
-          private: true
+          cors: true
   #        request:
   #          schemas:
   #            application/json: ${file(ass/swagger.yml):components.schemas.AlgoSubmitBody}
