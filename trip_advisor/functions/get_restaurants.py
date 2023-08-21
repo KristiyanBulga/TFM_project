@@ -1,5 +1,6 @@
 import os
 import time
+import math
 import boto3
 import logging
 from datetime import datetime, timedelta
@@ -45,8 +46,10 @@ def handler(event, context) -> None:
 
     options = set_chrome_options()
     driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
-
-    today = datetime.today()
+    if event.get("custom_date", None) is not None:
+        today = datetime.strptime(event["custom_date"], "%Y_%m_%d_%H_%M_%S")
+    else:
+        today = datetime.today()
     tomorrow = today + timedelta(days=1)
     day_num, month_num, year_num = tomorrow.day, tomorrow.month, tomorrow.year
 
@@ -104,7 +107,7 @@ def handler(event, context) -> None:
     links = []
 
     # Scrap all pages
-    for i in range(int(num_restaurants)//restaurants_per_page+1):
+    for i in range(math.ceil(int(num_restaurants)/restaurants_per_page)):
         logging.info(f"Obtaining links from {i*restaurants_per_page} to {(i+1)*restaurants_per_page}")
         # Scrap info of each restaurant
         restaurant_list = driver.find_element(By.ID, 'component_2')
@@ -115,7 +118,7 @@ def handler(event, context) -> None:
             links.append({"name": restaurant_name, 'link': restaurant.get_attribute('href')})
         # Navigate to the next page
         pages_links = driver.find_element(By.CSS_SELECTOR, '.unified.pagination.js_pageLinks')
-        if i < int(num_restaurants)//restaurants_per_page:
+        if i < int(num_restaurants)//restaurants_per_page - 1:
             pages_links.find_element(By.XPATH, "//a[normalize-space()="+str(i+2)+"]").click()
             time.sleep(10)
 

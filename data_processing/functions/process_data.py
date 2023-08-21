@@ -135,7 +135,7 @@ def _data_process_google_maps(restaurant_data: dict, ta_place_id: str, ta_restau
         expression_attr = {
             ':rvw_rate': {'N': str(review["rating"])},
             ':rvw_text': {'S': review["text"]},
-            ':rvw_platform': {'S': "trip_advisor"}
+            ':rvw_platform': {'S': "google_maps"}
         }
         update_item_dynamo(comments_db, key, upd_expr, expression_attr)
     return restaurant_info
