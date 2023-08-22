@@ -81,8 +81,8 @@ def handler(event, context) -> None:
             data["services"].append("takeout")
         if restaurant.get("gm_wheelchair_accessible_entrance", False):
             data["services"].append("wheelchair accessible entrance")
-        if restaurant.get("ta_serves_brakfast", False):
-            data["services"].append("serves brakfast")
+        if restaurant.get("ta_serves_breakfast", False):
+            data["services"].append("serves breakfast")
         if restaurant.get("ta_serves_brunch", False):
             data["services"].append("serves brunch")
 

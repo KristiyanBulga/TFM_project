@@ -1,49 +1,40 @@
-import boto3
-import json
 import logging
-from datetime import datetime, timedelta
+
+from functions.api_weekly_query import get_weekly_query
+from functions.api_restaurant_data import get_restaurant_data
+from functions.api_restaurant_reviews import get_restaurant_reviews
 
 logging.getLogger().setLevel(logging.INFO)
 
 
 def router(event, context):
     logging.info(f"Event: {event}")
-    s3 = boto3.client('s3')
-    ta_place_id = "g187486"  # Take it from the event when having multiple places
-    today = datetime.today()
-    if today.weekday() != 6:
-        today = today - timedelta(days=today.weekday() + 1)
-    date_iso = today.isocalendar()
-    prefix = f'weekly_query/{ta_place_id}/{date_iso.year}/{date_iso.week}/'
-    result = s3.list_objects(Bucket="trip-advisor-dev", Prefix=prefix)
-    if result.get('Contents') is None:
+    path = event.get('path', None)
+    if path is None:
         return {
             "statusCode": 400,
             "headers": {
-              'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Credentials': True,
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Credentials': True,
             },
-            "body": f"S3 path not found: {prefix}"
+            "body": "No path parameter"
         }
-    first_element = result.get('Contents')[0]
-    logging.info(f"Obtaining data from {first_element.get('Key')}")
-    data = s3.get_object(Bucket="trip-advisor-dev", Key=first_element.get('Key'))
-    contents = data['Body'].read().decode("utf-8")
-    weekly_data = json.loads(contents)
-    # url = s3.generate_presigned_url(
-    #     ClientMethod='get_object',
-    #     Params={
-    #         'Bucket': 'trip-advisor-dev',
-    #         'Key': 'weekly_query/g187486/2023/27/g187486_2023_07_09_07_00_00.json'
-    #     },
-    #     ExpiresIn=3600  # one hour in seconds, increase if needed
-    # )
-    return {
-        "statusCode": 200,
-        "headers": {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Credentials': True,
-        },
-        # "body": json.dumps({"url": url})
-        "body": json.dumps(weekly_data)
-    }
+    if path == '/data/combined':
+        return get_weekly_query(event)
+    elif path == '/data/trip_advisor':
+        return get_restaurant_data(event, "trip_advisor")
+    elif path == '/data/google_maps':
+        return get_restaurant_data(event, "google_maps")
+    elif path == '/reviews/trip_advisor':
+        return get_restaurant_reviews(event, "trip_advisor")
+    elif path == '/reviews/google_maps':
+        return get_restaurant_reviews(event, "google_maps")
+    else:
+        return {
+            "statusCode": 404,
+            "headers": {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Credentials': True,
+            },
+            "body": "Endpoint not found"
+        }

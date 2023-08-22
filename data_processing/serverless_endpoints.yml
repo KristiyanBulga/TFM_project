@@ -6,6 +6,9 @@ package:
   patterns:
     - '!./**'
     - 'functions/api.py'
+    - 'functions/api_restaurant_data.py'
+    - 'functions/api_restaurant_reviews.py'
+    - 'functions/api_weekly_query.py'
     - 'functions/update_weekly_data.py'
     - 'functions/create_weekly_query.py'
     - 'utils/helper_wo_pandas.py'
@@ -67,6 +70,10 @@ functions:
       - http:
           path: /data/combined
           method: get
+          cors: true
+      - http:
+          path: /data/trip_advisor
+          method: post
           cors: true
   #        request:
   #          schemas:
