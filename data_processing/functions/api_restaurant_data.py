@@ -15,9 +15,7 @@ athena_databases = {
 query_columns = {
     "trip_advisor": ["symbol", "price_lower", "price_upper", "score_overall", "score_food", "score_service",
                      "score_price_quality", "score_atmosphere", "ranking", "year", "week"],
-    "google_maps": ["ta_restaurant_id", "symbol", "score_overall", "serves_lunch", "serves_dinner", "serves_beer",
-                    "serves_vegetarian_food", "serves_wine", "takeout", "wheelchair_accessible_entrance", "dine_in",
-                    "delivery", "reservable"]
+    "google_maps": ["symbol", "score_overall", "year", "week"]
 }
 client = boto3.client('athena')
 queries_bucket = "s3://trip-advisor-dev/queries"
@@ -58,7 +56,10 @@ def trip_advisor_parser(data):
         hours = schedule[key]
         grouped_hours = []
         for i in range(0, len(hours), 2):
-            grouped_hours.append("-".join([hours[i], hours[i + 1]]))
+            if i + 1 < len(hours):
+                grouped_hours.append("-".join([hours[i], hours[i + 1]]))
+            else:
+                grouped_hours.append(hours[i])
         schedule_processed[key] = ", ".join(grouped_hours)
     res["schedule"] = schedule_processed
     tags = json.loads(data[24].get("VarCharValue", '{}'))
@@ -66,6 +67,40 @@ def trip_advisor_parser(data):
     for key in tags.keys():
         tags_processed += tags[key]
     res["tags"] = tags_processed
+    return res
+
+
+def google_maps_parser(data):
+    res = {
+        "restaurant_id": data[0].get("VarCharValue", "-"),
+        "name": data[3].get("VarCharValue", "-"),
+        "url": data[4].get("VarCharValue", "-"),
+        "symbol": int(float(data[5]["VarCharValue"])) if data[5].get("VarCharValue") is not None else '-',
+        "score_overall": float(data[6]["VarCharValue"]) if data[6].get("VarCharValue") is not None else '-',
+        "address": data[7].get("VarCharValue", "-"),
+        "webpage": data[8].get("VarCharValue", "-"),
+        "phone": data[9].get("VarCharValue", "-"),
+        "business_status": data[10].get("VarCharValue", "-"),
+        "serves_lunch": parse_athena_boolean(data[11].get("VarCharValue", "-")),
+        "serves_dinner": parse_athena_boolean(data[12].get("VarCharValue", "-")),
+        "serves_beer": parse_athena_boolean(data[13].get("VarCharValue", "-")),
+        "serves_vegetarian_food": parse_athena_boolean(data[14].get("VarCharValue", "-")),
+        "serves_wine": parse_athena_boolean(data[15].get("VarCharValue", "-")),
+        "takeout": parse_athena_boolean(data[16].get("VarCharValue", "-")),
+        "wheelchair_accessible_entrance": parse_athena_boolean(data[17].get("VarCharValue", "-")),
+        "dine_in": parse_athena_boolean(data[18].get("VarCharValue", "-")),
+        "deliver": parse_athena_boolean(data[19].get("VarCharValue", "-")),
+        "reservable": parse_athena_boolean(data[20].get("VarCharValue", "-")),
+        "place_id": data[22].get("VarCharValue", "-"),
+        "year": int(data[23]["VarCharValue"]) if data[23].get("VarCharValue") is not None else '-',
+        "week": int(data[24]["VarCharValue"]) if data[24].get("VarCharValue") is not None else '-',
+    }
+    schedule = json.loads(data[21].get("VarCharValue", '{}'))
+    schedule_processed = dict()
+    for key in schedule.keys():
+        hours = schedule[key]
+        schedule_processed[key] = "-".join(hours)
+    res["schedule"] = schedule_processed
     return res
 
 
@@ -85,6 +120,18 @@ def trip_advisor_historical(rows):
         historical["ranking"].append(int(float(data[8].get("VarCharValue", "-1"))))
         historical["year"].append(int(data[9].get("VarCharValue", "-1")))
         historical["week"].append(int(data[10].get("VarCharValue", "-1")))
+    return historical
+
+
+def google_maps_historical(rows):
+    historical = {x: [] for x in query_columns["google_maps"]}
+    for row in rows:
+        data = row["Data"]
+        symbols = int(float(data[0]["VarCharValue"]))
+        historical["symbol"].append(symbols if symbols else -1)
+        historical["score_overall"].append(float(data[1].get("VarCharValue", "-1")))
+        historical["year"].append(int(data[2].get("VarCharValue", "-1")))
+        historical["week"].append(int(data[3].get("VarCharValue", "-1")))
     return historical
 
 
@@ -118,6 +165,8 @@ def get_restaurant_data(event, platform):
         data = row["Data"]
         if platform == 'trip_advisor':
             res = trip_advisor_parser(data)
+        if platform == 'google_maps':
+            res = google_maps_parser(data)
 
     # HISTORICAL DATA
 
@@ -148,6 +197,8 @@ def get_restaurant_data(event, platform):
     logging.info(f'RESULT {results}')
     if platform == 'trip_advisor':
         res["historical"] = trip_advisor_historical(results["ResultSet"]["Rows"][1:])
+    if platform == 'google_maps':
+        res["historical"] = google_maps_historical(results["ResultSet"]["Rows"][1:])
 
     return {
         "statusCode": 200,

@@ -75,6 +75,10 @@ functions:
           path: /data/trip_advisor
           method: post
           cors: true
+      - http:
+          path: /data/google_maps
+          method: post
+          cors: true
   #        request:
   #          schemas:
   #            application/json: ${file(ass/swagger.yml):components.schemas.AlgoSubmitBody}
