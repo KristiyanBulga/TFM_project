@@ -2,7 +2,7 @@ import boto3
 import json
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from utils.helper_wo_pandas import parse_athena_boolean
 
 

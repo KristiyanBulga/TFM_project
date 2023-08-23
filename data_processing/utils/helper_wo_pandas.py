@@ -34,6 +34,24 @@ def get_from_dynamo_with_index(table_name: str, index_name: str, key_cond_expr: 
     return response.get('Items')
 
 
+def get_from_dynamo(table_name: str, key_cond_expr: str, expr_names: dict, expr_attr: dict) -> list:
+    """
+    This function makes a query to the dynamoDB using the params
+    :param table_name: name of the dynamoDB table
+    :param key_cond_expr: the condition
+    :param expr_attr: names for the condition expression
+    :param expr_attr: values for the condition expression
+    :return: the list of items from dynamoDB
+    """
+    response = dynamodb.query(
+        TableName=table_name,
+        KeyConditionExpression=key_cond_expr,
+        ExpressionAttributeNames=expr_names,
+        ExpressionAttributeValues=expr_attr
+    )
+    return response.get('Items')
+
+
 def update_item_dynamo(table, key, update_expr, expression_attr):
     dynamodb.update_item(
         TableName=table,

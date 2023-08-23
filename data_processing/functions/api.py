@@ -25,10 +25,8 @@ def router(event, context):
         return get_restaurant_data(event, "trip_advisor")
     elif path == '/data/google_maps':
         return get_restaurant_data(event, "google_maps")
-    elif path == '/reviews/trip_advisor':
-        return get_restaurant_reviews(event, "trip_advisor")
-    elif path == '/reviews/google_maps':
-        return get_restaurant_reviews(event, "google_maps")
+    elif path == '/reviews/last':
+        return get_restaurant_reviews(event, "last")
     else:
         return {
             "statusCode": 404,
