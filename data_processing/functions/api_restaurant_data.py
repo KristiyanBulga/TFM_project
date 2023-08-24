@@ -109,29 +109,30 @@ def trip_advisor_historical(rows):
     for row in rows:
         data = row["Data"]
         symbols = json.loads(data[0].get("VarCharValue", "[]"))
-        historical["symbol"].append(sum(symbols)/len(symbols) if symbols else -1)
-        historical["price_lower"].append(float(data[1].get("VarCharValue", "-1")))
-        historical["price_upper"].append(float(data[2].get("VarCharValue", "-1")))
-        historical["score_overall"].append(float(data[3].get("VarCharValue", "-1")))
-        historical["score_food"].append(float(data[4].get("VarCharValue", "-1")))
-        historical["score_service"].append(float(data[5].get("VarCharValue", "-1")))
-        historical["score_price_quality"].append(float(data[6].get("VarCharValue", "-1")))
-        historical["score_atmosphere"].append(float(data[7].get("VarCharValue", "-1")))
-        historical["ranking"].append(int(float(data[8].get("VarCharValue", "-1"))))
-        historical["year"].append(int(data[9].get("VarCharValue", "-1")))
-        historical["week"].append(int(data[10].get("VarCharValue", "-1")))
+        historical["symbol"].append(sum(symbols)/len(symbols) if symbols else None)
+        historical["price_lower"].append(float(data[1].get("VarCharValue")) if data[1].get("VarCharValue") else None)
+        historical["price_upper"].append(float(data[2].get("VarCharValue")) if data[2].get("VarCharValue") else None)
+        historical["score_overall"].append(float(data[3].get("VarCharValue")) if data[3].get("VarCharValue") else None)
+        historical["score_food"].append(float(data[4].get("VarCharValue")) if data[4].get("VarCharValue") else None)
+        historical["score_service"].append(float(data[5].get("VarCharValue")) if data[5].get("VarCharValue") else None)
+        historical["score_price_quality"].append(float(data[6].get("VarCharValue")) if data[6].get("VarCharValue") else None)
+        historical["score_atmosphere"].append(float(data[7].get("VarCharValue")) if data[7].get("VarCharValue") else None)
+        historical["ranking"].append(int(float(data[8].get("VarCharValue"))) if data[8].get("VarCharValue") else None)
+        historical["year"].append(int(data[9].get("VarCharValue")) if data[9].get("VarCharValue") else None)
+        historical["week"].append(int(data[10].get("VarCharValue")) if data[10].get("VarCharValue") else None)
     return historical
 
 
 def google_maps_historical(rows):
     historical = {x: [] for x in query_columns["google_maps"]}
+    print("ROWS", rows)
     for row in rows:
         data = row["Data"]
-        symbols = int(float(data[0]["VarCharValue"]))
+        symbols = int(float(data[0]["VarCharValue"])) if data[0].get("VarCharValue") else None
         historical["symbol"].append(symbols if symbols else -1)
-        historical["score_overall"].append(float(data[1].get("VarCharValue", "-1")))
-        historical["year"].append(int(data[2].get("VarCharValue", "-1")))
-        historical["week"].append(int(data[3].get("VarCharValue", "-1")))
+        historical["score_overall"].append(float(data[1].get("VarCharValue")) if data[1].get("VarCharValue") else None)
+        historical["year"].append(int(data[2].get("VarCharValue")) if data[2].get("VarCharValue") else None)
+        historical["week"].append(int(data[3].get("VarCharValue")) if data[3].get("VarCharValue") else None)
     return historical
 
 

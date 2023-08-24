@@ -13,6 +13,7 @@ buckets = {
     "google_maps": f'google-maps-bucket-{stage}'
 }
 comments_db = f"comments-db-{stage}"
+reviews_history_db = f"reviews-history-db-{stage}"
 weekly_data_db = f"list-restaurants-data-db-{stage}"
 
 

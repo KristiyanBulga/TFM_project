@@ -14,6 +14,7 @@ custom:
   stage: ${opt:stage, self:custom.defaultStage}
   region: ${opt:region, self:custom.defaultRegion}
   commentsDB: comments-db-${self:custom.stage}
+  reviews_historyDB: reviews-history-db-${self:custom.stage}
 
 provider:
   name: aws
@@ -72,4 +73,19 @@ resources:
             AttributeName: place
           - KeyType: RANGE
             AttributeName: timestamp
+        BillingMode: PAY_PER_REQUEST
+    ReviewsHistoryDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.reviews_historyDB}
+        AttributeDefinitions:
+          - AttributeName: place
+            AttributeType: S
+          - AttributeName: detail
+            AttributeType: S
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: place
+          - KeyType: RANGE
+            AttributeName: detail
         BillingMode: PAY_PER_REQUEST

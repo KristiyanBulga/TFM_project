@@ -2,9 +2,10 @@ import json
 import boto3
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from html import unescape
-from utils.helper import buckets, get_from_dynamo_with_index, store_in_s3_bucket, update_item_dynamo, comments_db
+from utils.helper import buckets, get_from_dynamo_with_index, store_in_s3_bucket, update_item_dynamo, comments_db, \
+    reviews_history_db
 
 logging.getLogger().setLevel(logging.INFO)
 ta_day_conversion = {"lun": "lunes", "mar": "martes", "mié": "miércoles", "jue": "jueves", "vie": "viernes",
@@ -62,6 +63,7 @@ def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_resta
     # Store in a file the reviews
     reviews = data.get("reviews", [])
     logging.info(f"Found {len(reviews)} reviews for {ta_place_id}-{ta_restaurant_id}")
+    review_rates = []
     for review in reviews:
         date_review = datetime.strptime(review["date_review"], '%Y_%m_%d').date()
         datetime_review = datetime.combine(date_review, datetime.now().time())
@@ -77,6 +79,19 @@ def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_resta
             ':rvw_platform': {'S': "trip_advisor"}
         }
         update_item_dynamo(comments_db, key, upd_expr, expression_attr)
+        review_rates.append(review["rating"])
+
+    today_iso = today.isocalendar()
+    key = {
+        'place': {'S': f"{ta_place_id}-{ta_restaurant_id}"},
+        'detail': {'S': f"{today_iso.year}-{today_iso.week}-trip_advisor"}
+    }
+    upd_expr = 'SET num_reviews = :rvw_num, mean_reviews = :rvw_mean'
+    expression_attr = {
+        ':rvw_num': {'N': str(len(review_rates))},
+        ':rvw_mean': {'N': str(sum(review_rates)/len(review_rates) if len(review_rates) > 0 else -1)}
+    }
+    update_item_dynamo(reviews_history_db, key, upd_expr, expression_attr)
     return restaurant_info
 
 
@@ -125,6 +140,7 @@ def _data_process_google_maps(restaurant_data: dict, ta_place_id: str, ta_restau
     # Store in a file the reviews
     reviews = data.get("reviews", [])
     logging.info(f"Found {len(reviews)} reviews for {ta_place_id}-{ta_restaurant_id}")
+    review_rates = []
     for review in reviews:
         timestamp = review["time"]
         key = {
@@ -138,6 +154,20 @@ def _data_process_google_maps(restaurant_data: dict, ta_place_id: str, ta_restau
             ':rvw_platform': {'S': "google_maps"}
         }
         update_item_dynamo(comments_db, key, upd_expr, expression_attr)
+        if (today-timedelta(weeks=1)).timestamp() < timestamp < today.timestamp():
+            review_rates.append(review["rating"])
+
+    today_iso = today.isocalendar()
+    key = {
+        'place': {'S': f"{ta_place_id}-{ta_restaurant_id}"},
+        'detail': {'S': f"{today_iso.year}-{today_iso.week}-google_maps"}
+    }
+    upd_expr = 'SET num_reviews = :rvw_num, mean_reviews = :rvw_mean'
+    expression_attr = {
+        ':rvw_num': {'N': str(len(review_rates))},
+        ':rvw_mean': {'N': str(sum(review_rates) / len(review_rates) if len(review_rates) > 0 else -1)}
+    }
+    update_item_dynamo(reviews_history_db, key, upd_expr, expression_attr)
     return restaurant_info
 
 
