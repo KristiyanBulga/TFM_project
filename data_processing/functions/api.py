@@ -2,7 +2,7 @@ import logging
 
 from functions.api_weekly_query import get_weekly_query
 from functions.api_restaurant_data import get_restaurant_data
-from functions.api_restaurant_reviews import get_restaurant_reviews
+from functions.api_restaurant_reviews import get_restaurant_reviews, get_reviews_history
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -27,6 +27,10 @@ def router(event, context):
         return get_restaurant_data(event, "google_maps")
     elif path == '/reviews/last':
         return get_restaurant_reviews(event, "last")
+    elif path == '/reviews/all':
+        return get_restaurant_reviews(event, "all")
+    elif path == '/reviews/historical':
+        return get_reviews_history(event)
     else:
         return {
             "statusCode": 404,

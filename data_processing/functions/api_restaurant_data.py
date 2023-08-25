@@ -75,7 +75,7 @@ def google_maps_parser(data):
         "restaurant_id": data[0].get("VarCharValue", "-"),
         "name": data[3].get("VarCharValue", "-"),
         "url": data[4].get("VarCharValue", "-"),
-        "symbol": int(float(data[5]["VarCharValue"])) if data[5].get("VarCharValue") is not None else '-',
+        "symbol": '€' * int(float(data[5]["VarCharValue"])) if data[5].get("VarCharValue") is not None else '-',
         "score_overall": float(data[6]["VarCharValue"]) if data[6].get("VarCharValue") is not None else '-',
         "address": data[7].get("VarCharValue", "-"),
         "webpage": data[8].get("VarCharValue", "-"),

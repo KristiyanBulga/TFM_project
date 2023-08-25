@@ -83,6 +83,14 @@ functions:
           path: /reviews/last
           method: post
           cors: true
+      - http:
+          path: /reviews/all
+          method: post
+          cors: true
+      - http:
+          path: /reviews/historical
+          method: post
+          cors: true
   #        request:
   #          schemas:
   #            application/json: ${file(ass/swagger.yml):components.schemas.AlgoSubmitBody}
