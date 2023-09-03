@@ -3,6 +3,8 @@ import logging
 from functions.api_weekly_query import get_weekly_query
 from functions.api_restaurant_data import get_restaurant_data
 from functions.api_restaurant_reviews import get_restaurant_reviews, get_reviews_history
+from functions.api_notification_configs import get_notification_configs, add_notification_config, \
+    delete_notification_config, get_notifications
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -31,6 +33,14 @@ def router(event, context):
         return get_restaurant_reviews(event, "all")
     elif path == '/reviews/historical':
         return get_reviews_history(event)
+    elif path == '/notifications/configurations':
+        return get_notification_configs(event)
+    elif path == '/notifications/configurations/new':
+        return add_notification_config(event)
+    elif path == '/notifications/configurations/delete':
+        return delete_notification_config(event)
+    elif path == '/notifications':
+        return get_notifications(event)
     else:
         return {
             "statusCode": 404,

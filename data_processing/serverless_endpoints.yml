@@ -5,8 +5,10 @@ frameworkVersion: "=3.28.1"
 package:
   patterns:
     - '!./**'
+    - 'functions/add_notifications.py'
     - 'functions/api.py'
     - 'functions/api_restaurant_data.py'
+    - 'functions/api_notification_configs.py'
     - 'functions/api_restaurant_reviews.py'
     - 'functions/api_weekly_query.py'
     - 'functions/update_weekly_data.py'
@@ -19,6 +21,8 @@ custom:
   stage: ${opt:stage, self:custom.defaultStage}
   region: ${opt:region, self:custom.defaultRegion}
   listRestaurantsDataDB: list-restaurants-data-db-${self:custom.stage}
+  notificationConfigsDB: notification-configs-db-${self:custom.stage}
+  notificationsDB: notifications-db-${self:custom.stage}
 
 provider:
   name: aws
@@ -62,6 +66,31 @@ functions:
           input:
             trip_advisor_place_id: g187486
 
+  create-user-notifications:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'Create user notifications based on configurations'
+    handler: functions/add_notifications.handler
+    timeout: 900
+    events:
+      - schedule:
+          name: schedule-user-notifications
+          description: 'Invoke lambda that creates notifications'
+          rate: cron(0 8 ? * SUN *)
+          enabled: true
+
+  create-admin-notifications:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'Create admin notifications based on configurations'
+    handler: functions/add_notifications.handler_admin
+    timeout: 900
+    events:
+      - schedule:
+          name: schedule-admin-notifications
+          description: 'Invoke lambda that creates admin notifications'
+          rate: cron(0 9 ? * SUN *)
+          enabled: true
+
+
   api:
     role: arn:aws:iam::992675252360:role/LabRole
     description: 'Router to all endpoints'
@@ -91,6 +120,22 @@ functions:
           path: /reviews/historical
           method: post
           cors: true
+      - http:
+          path: /notifications/configurations
+          method: post
+          cors: true
+      - http:
+          path: /notifications/configurations/new
+          method: post
+          cors: true
+      - http:
+          path: /notifications/configurations/delete
+          method: post
+          cors: true
+      - http:
+          path: /notifications
+          method: post
+          cors: true
   #        request:
   #          schemas:
   #            application/json: ${file(ass/swagger.yml):components.schemas.AlgoSubmitBody}
@@ -111,4 +156,34 @@ resources:
             AttributeName: ta_place_id
           - KeyType: RANGE
             AttributeName: ta_restaurant_id
+        BillingMode: PAY_PER_REQUEST
+    NotificationConfigsDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.notificationConfigsDB}
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: username
+          - KeyType: RANGE
+            AttributeName: timestamp
+        BillingMode: PAY_PER_REQUEST
+    NotificationsDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.notificationsDB}
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: username
+          - KeyType: RANGE
+            AttributeName: timestamp
         BillingMode: PAY_PER_REQUEST

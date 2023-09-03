@@ -15,6 +15,9 @@ buckets = {
 comments_db = f"comments-db-{stage}"
 reviews_history_db = f"reviews-history-db-{stage}"
 weekly_data_db = f"list-restaurants-data-db-{stage}"
+notif_configs_db = f"notification-configs-db-{stage}"
+notifs_db = f"notifications-db-{stage}"
+candidates_db = f"google-maps-candidates-db-{stage}"
 
 
 def get_from_dynamo_with_index(table_name: str, index_name: str, key_cond_expr: str, expr_attr: dict) -> list:
@@ -59,6 +62,13 @@ def update_item_dynamo(table, key, update_expr, expression_attr):
         Key=key,
         UpdateExpression=update_expr,
         ExpressionAttributeValues=expression_attr
+    )
+
+
+def delete_item_dynamo(table, key):
+    dynamodb.delete_item(
+        TableName=table,
+        Key=key
     )
 
 
