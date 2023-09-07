@@ -214,7 +214,10 @@ def handler(event, context) -> None:
         reviews_list = driver.find_element(By.ID, 'taplc_location_reviews_list_resp_rr_resp_0')
         reviews = reviews_list.find_elements(By.XPATH, './div/div')
         reviews_info = []
-        dt_upper = datetime.now()
+        if body.get("custom_date", None) is not None:
+            dt_upper = datetime.strptime(body["custom_date"], "%Y_%m_%d_%H_%M_%S")
+        else:
+            dt_upper = datetime.now()
         dt_upper = dt_upper.replace(hour=0, minute=0, second=0, microsecond=0)
         dt_lower = dt_upper - timedelta(weeks=1)
         for row in reviews:
@@ -247,7 +250,10 @@ def handler(event, context) -> None:
 
         logging.info(f"[{restaurant_id_ta}] Obtained all restaurant info. Storing file to S3")
 
-        today = datetime.today()
+        if body.get("custom_date", None) is not None:
+            today = datetime.strptime(body["custom_date"], "%Y_%m_%d_%H_%M_%S")
+        else:
+            today = datetime.today()
         today_iso = today.isocalendar()
         ids = restaurant_id_ta.split('-')
         # Write in a file all the data

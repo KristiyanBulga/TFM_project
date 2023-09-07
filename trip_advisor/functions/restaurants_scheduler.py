@@ -22,7 +22,10 @@ def handler(event, context) -> None:
         return
 
     # obtain list of restaurants
-    today = datetime.today()
+    if event.get("custom_date", None) is not None:
+        today = datetime.strptime(event["custom_date"], "%Y_%m_%d_%H_%M_%S")
+    else:
+        today = datetime.today()
     today_iso = today.isocalendar()
     s3 = boto3.client('s3')
     bucket = 'trip-advisor-dev'
@@ -42,6 +45,8 @@ def handler(event, context) -> None:
             "restaurant_name": restaurant.get("name"),
             "week_obtained_link": f"{today_iso.year}-{today_iso.week}"
         }
+        if event.get("custom_date", None) is not None:
+            data["custom_date"] = event["custom_date"]
 
         sqs_queue_name = f"trip-advisor-queue-{os.environ['stage']}"
         sqs = boto3.resource('sqs')

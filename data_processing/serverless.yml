@@ -1,0 +1,91 @@
+service: data-center
+
+frameworkVersion: "=3.28.1"
+
+package:
+  patterns:
+    - '!./**'
+    - 'functions/process_data.py'
+    - 'utils/**'
+
+custom:
+  defaultStage: dev
+  defaultRegion: us-east-1
+  stage: ${opt:stage, self:custom.defaultStage}
+  region: ${opt:region, self:custom.defaultRegion}
+  commentsDB: comments-db-${self:custom.stage}
+  reviews_historyDB: reviews-history-db-${self:custom.stage}
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: ${self:custom.region}
+  stage: ${self:custom.stage}
+  environment:
+    region: ${self:custom.region}
+    stage: ${self:custom.stage}
+  ecr:
+    images:
+      data_process_pandas_img:
+        path: "./"
+        platform: linux/amd64
+
+functions:
+  process-restaurant-data:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'Given a place and a platform process all the data obtained'
+    timeout: 900
+    image:
+      name: data_process_pandas_img
+      command:
+        - functions.process_data.handler
+    events:
+      - schedule:
+          name: process-trip-advisor-data
+          description: 'Invoke lambda that process the trip advisor obtained data'
+          rate: cron(0 20 ? * SAT *)
+          enabled: true
+          input:
+            trip_advisor_place_id: g187486
+            platform: trip_advisor
+      - schedule:
+          name: process-google-maps-data
+          description: 'Invoke lambda that process the google maps obtained data'
+          rate: cron(0 21 ? * SAT *)
+          enabled: true
+          input:
+            trip_advisor_place_id: g187486
+            platform: google_maps
+
+resources:
+  Resources:
+    CommentsDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.commentsDB}
+        AttributeDefinitions:
+          - AttributeName: place
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: place
+          - KeyType: RANGE
+            AttributeName: timestamp
+        BillingMode: PAY_PER_REQUEST
+    ReviewsHistoryDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.reviews_historyDB}
+        AttributeDefinitions:
+          - AttributeName: place
+            AttributeType: S
+          - AttributeName: detail
+            AttributeType: S
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: place
+          - KeyType: RANGE
+            AttributeName: detail
+        BillingMode: PAY_PER_REQUEST
