@@ -1,0 +1,187 @@
+service: trip-advisor
+
+frameworkVersion: "=3.28.1"
+
+package:
+  patterns:
+    - '!./**'
+    - 'functions/restaurants_scheduler.py'
+    - 'utils/**'
+
+custom:
+  defaultStage: dev
+  defaultRegion: us-east-1
+  stage: ${opt:stage, self:custom.defaultStage}
+  region: ${opt:region, self:custom.defaultRegion}
+  taBucket: ${self:service}-${self:custom.stage}
+  taQueue: ${self:service}-queue-${self:custom.stage}
+  taRestaurantsPlacesDB: trip-advisor-place-links-db-${self:custom.stage}
+  taRestaurantsDB: restaurants-db-${self:custom.stage}
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: ${self:custom.region}
+  stage: ${self:custom.stage}
+  environment:
+    region: ${self:custom.region}
+    stage: ${self:custom.stage}
+  ecr:
+    images:
+      ta_img:
+        path: "./"
+        platform: linux/amd64
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:ListBucket
+          Resource:
+            - arn:aws:s3:::${self.custom.ta-bucket}*
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource:
+            - "Fn::GetAtt": [ TripAdvisorRestaurantsDataQueue, Arn ]
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:GetItem
+          Resource:
+            - "Fn::GetAtt": [ TripAdvisorPlaceLinkDB, Arn ]
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+          Resource:
+            - "Fn::GetAtt": [ TripAdvisorPlaceLinkDB, Arn ]
+
+functions:
+  get-restaurants:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: Obtains all the restaurants links for a specific place
+    timeout: 900
+    memorySize: 2048
+    image:
+      name: ta_img
+      command:
+        - functions.get_restaurants.handler
+    events:
+      - schedule:
+          name: get-ta-restaurants-links
+          description: 'Invoke lambda to obtain all the restaurants links from trip advisor'
+          rate: cron(0 1 ? * SAT *)
+          enabled: true
+          input:
+            trip_advisor_place_id: g187486
+
+  restaurants-to-sqs:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'For each available link add restaurant to queue for data obtaining'
+    handler: functions/restaurants_scheduler.handler
+    timeout: 900
+    events:
+      - schedule:
+          name: schedule-ta-restaurant-data-obtaining
+          description: 'Invoke lambda that adds each restaurant to a queue'
+          rate: cron(0 3 ? * SAT *)
+          enabled: true
+          input:
+            trip_advisor_place_id: g187486
+
+  get-restaurant-data:
+    role: arn:aws:iam::992675252360:role/LabRole
+    description: 'Obtains the restaurants data from trip advisor page'
+    timeout: 900
+    memorySize: 2048
+    reservedConcurrency: 5
+    image:
+      name: ta_img
+      command:
+        - functions.get_restaurant_data.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - TripAdvisorRestaurantsDataQueue
+              - Arn
+
+resources:
+  Resources:
+    TripAdvisorRestaurantsDataQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.taQueue}
+        MessageRetentionPeriod: 259200  # 3 days
+        VisibilityTimeout: 5400  # 6 times the timeout of lambda
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - "TripAdvisorDeadLetterQueue"
+              - "Arn"
+          maxReceiveCount: 3
+
+    TripAdvisorDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: trip-advisor-dead-letter-queue-${self:custom.stage}
+        MessageRetentionPeriod: 518400  # 6 days
+
+    TripAdvisorBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.taBucket}
+
+    TripAdvisorPlaceLinkDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.taRestaurantsPlacesDB}
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: ta_place_id
+        AttributeDefinitions:
+          - AttributeName: ta_place_id
+            AttributeType: S
+        BillingMode: PAY_PER_REQUEST
+
+    RestaurantsDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.taRestaurantsDB}
+        AttributeDefinitions:
+          - AttributeName: ta_place_id
+            AttributeType: S
+          - AttributeName: ta_restaurant_id
+            AttributeType: S
+          - AttributeName: valid
+            AttributeType: S
+          - AttributeName: google_maps_id
+            AttributeType: S
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: ta_place_id
+          - KeyType: RANGE
+            AttributeName: ta_restaurant_id
+        GlobalSecondaryIndexes:
+          - IndexName: ValidRestaurants
+            KeySchema:
+              - AttributeName: ta_place_id
+                KeyType: HASH
+              - AttributeName: valid
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: GoogleMapsIdFinder
+            KeySchema:
+              - AttributeName: ta_place_id
+                KeyType: HASH
+              - AttributeName: google_maps_id
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST

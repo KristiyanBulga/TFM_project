@@ -1,0 +1,164 @@
+openapi: 3.0.3
+info:
+  title: RestaurantScan API
+  description: Descripción de todos los endpoints
+  contact:
+    email: cristian.stanimirov@alu.uclm.es
+  version: 1.0.0
+servers:
+  - url: https://tst223j7a2.execute-api.us-east-1.amazonaws.com/dev
+paths:
+  /data/combined:
+    get:
+      tags:
+        - data
+      summary: Lista de restaurantes
+      description: Devuelve la lista de restaurantes con datos de Trip Advisor y Google Maps
+      operationId: updatePet
+      responses:
+        '200':
+          description: Obtención de datos correcta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataCombined'
+        '400':
+          description: S3 Path not found
+    post:
+      tags:
+        - pet
+      summary: Add a new pet to the store
+      description: Add a new pet to the store
+      operationId: addPet
+      requestBody:
+        description: Create a new pet in the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Pet'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Pet'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '405':
+          description: Invalid input
+      security:
+        - petstore_auth:
+            - write:pets
+            - read:pets
+components:
+  schemas:
+    DataCombined:
+      type: object
+      properties:
+        place_id:
+          type: string
+        restaurant_id:
+          type: string
+        restaurant_name:
+          type: string
+        dates:
+          type: object
+          properties:
+            trip_advisor:
+              type: string
+            google_maps:
+              type: string
+        scores:
+          type: object
+          properties:
+            trip_advisor:
+              type: number
+            google_maps:
+              type: number
+            average:
+              type: number
+        symbol:
+          type: object
+          properties:
+            trip_advisor:
+              type: number
+            google_maps:
+              type: number
+            average:
+              type: number
+        services:
+          type: array
+          items:
+            type: string
+        travellers_choice:
+          type: boolean
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        petId:
+          type: integer
+          format: int64
+          example: 198772
+        quantity:
+          type: integer
+          format: int32
+          example: 7
+        shipDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          description: Order Status
+          example: approved
+          enum:
+            - placed
+            - approved
+            - delivered
+        complete:
+          type: boolean
+      xml:
+        name: order
+  requestBodies:
+    Pet:
+      description: Pet object that needs to be added to the store
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Pet'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Pet'
+    UserArray:
+      description: List of user object
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/User'
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://petstore3.swagger.io/oauth/authorize
+          scopes:
+            write:pets: modify pets in your account
+            read:pets: read your pets
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
