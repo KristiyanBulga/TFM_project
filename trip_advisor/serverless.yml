@@ -13,6 +13,7 @@ custom:
   defaultRegion: us-east-1
   stage: ${opt:stage, self:custom.defaultStage}
   region: ${opt:region, self:custom.defaultRegion}
+  role: arn:aws:iam::891376954408:role/LabRole
   taBucket: ${self:service}-${self:custom.stage}
   taQueue: ${self:service}-queue-${self:custom.stage}
   taRestaurantsPlacesDB: trip-advisor-place-links-db-${self:custom.stage}
@@ -23,6 +24,8 @@ provider:
   runtime: python3.9
   region: ${self:custom.region}
   stage: ${self:custom.stage}
+  deploymentBucket:
+    name: tfm-deployment-bucket
   environment:
     region: ${self:custom.region}
     stage: ${self:custom.stage}
@@ -63,7 +66,7 @@ provider:
 
 functions:
   get-restaurants:
-    role: arn:aws:iam::992675252360:role/LabRole
+    role: ${self:custom.role}
     description: Obtains all the restaurants links for a specific place
     timeout: 900
     memorySize: 2048
@@ -76,12 +79,12 @@ functions:
           name: get-ta-restaurants-links
           description: 'Invoke lambda to obtain all the restaurants links from trip advisor'
           rate: cron(0 1 ? * SAT *)
-          enabled: true
+          enabled: false
           input:
             trip_advisor_place_id: g187486
 
   restaurants-to-sqs:
-    role: arn:aws:iam::992675252360:role/LabRole
+    role: ${self:custom.role}
     description: 'For each available link add restaurant to queue for data obtaining'
     handler: functions/restaurants_scheduler.handler
     timeout: 900
@@ -89,13 +92,14 @@ functions:
       - schedule:
           name: schedule-ta-restaurant-data-obtaining
           description: 'Invoke lambda that adds each restaurant to a queue'
-          rate: cron(0 3 ? * SAT *)
-          enabled: true
+          rate: cron(11 1 * * ? *)
+          enabled: false
           input:
             trip_advisor_place_id: g187486
+            specific_list_date: "2024_03_07_19_00_00"
 
   get-restaurant-data:
-    role: arn:aws:iam::992675252360:role/LabRole
+    role: ${self:custom.role}
     description: 'Obtains the restaurants data from trip advisor page'
     timeout: 900
     memorySize: 2048
@@ -118,13 +122,13 @@ resources:
       Properties:
         QueueName: ${self:custom.taQueue}
         MessageRetentionPeriod: 259200  # 3 days
-        VisibilityTimeout: 5400  # 6 times the timeout of lambda
+        VisibilityTimeout: 1200  # 20 minutes
         RedrivePolicy:
           deadLetterTargetArn:
             Fn::GetAtt:
               - "TripAdvisorDeadLetterQueue"
               - "Arn"
-          maxReceiveCount: 3
+          maxReceiveCount: 5
 
     TripAdvisorDeadLetterQueue:
       Type: AWS::SQS::Queue
@@ -158,6 +162,8 @@ resources:
             AttributeType: S
           - AttributeName: ta_restaurant_id
             AttributeType: S
+          - AttributeName: ta_general_place_id
+            AttributeType: S
           - AttributeName: valid
             AttributeType: S
           - AttributeName: google_maps_id
@@ -181,6 +187,14 @@ resources:
               - AttributeName: ta_place_id
                 KeyType: HASH
               - AttributeName: google_maps_id
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ValidRestaurantsGeneralPlace
+            KeySchema:
+              - AttributeName: ta_general_place_id
+                KeyType: HASH
+              - AttributeName: valid
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL

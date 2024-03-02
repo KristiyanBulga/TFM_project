@@ -28,6 +28,8 @@ def handler(event, context) -> None:
     if ta_place_id is None:
         logging.error("missing trip_advisor_place_id variable in the event")
         return
+    
+    only_first_page = event.get("only_first_page", False)
 
     places_db_table = f"trip-advisor-place-links-db-{os.environ['stage']}"
     response = dynamodb.get_item(
@@ -51,76 +53,53 @@ def handler(event, context) -> None:
     else:
         today = datetime.today()
     tomorrow = today + timedelta(days=1)
-    day_num, month_num, year_num = tomorrow.day, tomorrow.month, tomorrow.year
 
     # load page
     driver.get(ta_place_link.get('S', None))
-    time.sleep(5)
+    time.sleep(10)
 
     # accept cookies
     try:
         driver.find_element(By.ID, 'onetrust-accept-btn-handler').click()
-        time.sleep(5)
+        time.sleep(10)
     except NoSuchElementException:
         logging.info("There is not cookies message")
-
-    # select date
-    driver.find_element(By.CSS_SELECTOR, '.unified-picker.ui_picker').click()
-    months = driver.find_elements(By.CSS_SELECTOR, ".dsdc-month")
-    for month in months:
-        month_name = month.find_element(By.CSS_SELECTOR, ".dsdc-month-title")
-        if month_name.get_attribute("innerHTML") == f"{month_code[month_num]} {year_num}":
-            clicked_date = False
-            dates = month.find_elements(By.CSS_SELECTOR, ".dsdc-cell.dsdc-day")
-            for date in dates:
-                if date.get_attribute("innerHTML") == str(day_num):
-                    date.click()
-                    clicked_date = True
-                    break
-            if not clicked_date:
-                raise Exception("ERROR: The specified day does not exist")
-            break
-    time.sleep(3)
-
-    # select hour
-    selector_div = driver.find_element(By.CSS_SELECTOR, '.ui_picker.resv_img.drop_down_input.drop_down_select.notOldIE.inner.time_dropdown.twenty_four_format')
-    select = Select(selector_div.find_element(By.CSS_SELECTOR, '.drop_down_select_elmt'))
-    select.select_by_visible_text('19:30')
-    time.sleep(3)
-
-    # select people
-    selector_div = driver.find_element(By.CSS_SELECTOR, '.ui_picker.resv_img.drop_down_input.drop_down_select.notOldIE.inner.ppl_dropdown ')
-    select = Select(selector_div.find_element(By.CSS_SELECTOR, '.drop_down_select_elmt'))
-    select.select_by_value('1')
-    time.sleep(3)
-
-    # push search button
-    driver.find_element(By.ID, 'RESTAURANT_SEARCH_BTN').click()
-    time.sleep(10)
 
     # GET BASIC INFO OF THE RESTAURANTS
     restaurants_per_page = 30
     # number of found restaurants
-    component_36 = driver.find_element(By.ID, 'component_36')
-    num_restaurants = component_36.find_element(By.CSS_SELECTOR, '.b').get_attribute("innerHTML")
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+    time.sleep(2)
+    results = driver.find_element(By.CSS_SELECTOR, '.biGQs._P.pZUbB.hzzSG.KxBGd')
+    num_restaurants = results.find_element(By.CSS_SELECTOR, '.b').get_attribute("innerHTML")
     logging.info(f"{num_restaurants} restaurants have been found")
     links = []
 
-    # Scrap all pages
-    for i in range(math.ceil(int(num_restaurants)/restaurants_per_page)):
-        logging.info(f"Obtaining links from {i*restaurants_per_page} to {(i+1)*restaurants_per_page}")
+    if only_first_page:
+        logging.info(f"Obtaining links from {0} to {restaurants_per_page}")
         # Scrap info of each restaurant
-        restaurant_list = driver.find_element(By.ID, 'component_2')
-        all_restaurants = restaurant_list.find_elements(By.CSS_SELECTOR, '.Lwqic.Cj.b')
+        all_restaurants = driver.find_elements(By.CSS_SELECTOR, '.vIjFZ.Gi.o.VOEhq')
         for restaurant in all_restaurants:
-            restaurant_name = restaurant.get_attribute('innerHTML')
+            restaurant_data = restaurant.find_element(By.CSS_SELECTOR, '.BMQDV._F.Gv.wSSLS.SwZTJ.FGwzt.ukgoS')
+            restaurant_name = restaurant_data.get_attribute('innerHTML')
             restaurant_name = restaurant_name[restaurant_name.find('.')+2:]
-            links.append({"name": restaurant_name, 'link': restaurant.get_attribute('href')})
-        # Navigate to the next page
-        pages_links = driver.find_element(By.CSS_SELECTOR, '.unified.pagination.js_pageLinks')
-        if i < int(num_restaurants)//restaurants_per_page - 1:
-            pages_links.find_element(By.XPATH, "//a[normalize-space()="+str(i+2)+"]").click()
-            time.sleep(10)
+            links.append({"name": restaurant_name, 'link': restaurant_data.get_attribute('href')})
+    else:
+        # Scrap all pages
+        for i in range(math.ceil(int(num_restaurants)/restaurants_per_page)):
+            logging.info(f"Obtaining links from {i*restaurants_per_page} to {(i+1)*restaurants_per_page}")
+            # Scrap info of each restaurant
+            all_restaurants = driver.find_elements(By.CSS_SELECTOR, '.vIjFZ.Gi.o.VOEhq')
+            for restaurant in all_restaurants:
+                restaurant_data = restaurant.find_element(By.CSS_SELECTOR, '.BMQDV._F.Gv.wSSLS.SwZTJ.FGwzt.ukgoS')
+                restaurant_name = restaurant_data.get_attribute('innerHTML')
+                restaurant_name = restaurant_name[restaurant_name.find('.')+2:]
+                links.append({"name": restaurant_name, 'link': restaurant_data.get_attribute('href')})
+            # Navigate to the next page
+            pages_links = driver.find_element(By.CSS_SELECTOR, '.gBgtO')
+            if i < int(num_restaurants)//restaurants_per_page - 1:
+                pages_links.find_element(By.XPATH, "//a/span/span[normalize-space()="+str(i+2)+"]").find_element(By.XPATH, "./../..").click()
+                time.sleep(15)
 
     driver.close()
     driver.quit()

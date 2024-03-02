@@ -21,12 +21,15 @@ def handler(event, context) -> None:
         logging.error("missing trip_advisor_place_id variable in the event")
         return
 
+    # Specific list of restaurants
+    specific_list_date = event.get("specific_list_date", False)
+
     # obtain list of restaurants
     if event.get("custom_date", None) is not None:
         today = datetime.strptime(event["custom_date"], "%Y_%m_%d_%H_%M_%S")
     else:
         today = datetime.today()
-    today_iso = today.isocalendar()
+    today_iso = datetime.strptime(specific_list_date, "%Y_%m_%d_%H_%M_%S").isocalendar() if specific_list_date else today.isocalendar()
     s3 = boto3.client('s3')
     bucket = 'trip-advisor-dev'
     result = s3.list_objects(Bucket=bucket, Prefix=f'raw_data/links/{ta_place_id}/{today_iso.year}/{today_iso.week}/')
@@ -43,7 +46,8 @@ def handler(event, context) -> None:
             "link": restaurant.get("link"),
             "trip_advisor_complete_id": ta_id,
             "restaurant_name": restaurant.get("name"),
-            "week_obtained_link": f"{today_iso.year}-{today_iso.week}"
+            "week_obtained_link": f"{today_iso.year}-{today_iso.week}",
+            "ta_place_id": ta_place_id
         }
         if event.get("custom_date", None) is not None:
             data["custom_date"] = event["custom_date"]

@@ -95,7 +95,7 @@ def handler(event, context) -> None:
                         info["schedule"][day_of_the_week].append(hour)
                     except:
                         pass
-            schedule.find_element(By.CSS_SELECTOR, '.Tatqp._Q.t._U.c._S').click()
+            schedule.find_element(By.CSS_SELECTOR, '.UikNM._G.B-._S._W._T.c.G_.wSSLS.TXrCr').click()
         except:
             info["schedule"] = None
 
@@ -178,8 +178,9 @@ def handler(event, context) -> None:
         info["webpage"] = None
         info["email"] = None
         info["phone"] = None
+        
         # Third card
-        divs = cards[2].find_elements(By.CSS_SELECTOR, '.IdiaP.Me')
+        divs = cards[2].find_element(By.CSS_SELECTOR, '.f.e').find_elements(By.TAG_NAME, 'div')
         for div in divs:
             try:
                 div.find_element(By.CSS_SELECTOR, '.ui_icon.map-pin-fill.XMrSj')
@@ -209,6 +210,10 @@ def handler(event, context) -> None:
                 info['phone'] = re.search('(?<=tel:)(.*)', link.get_attribute('href')).group(0)
             except:
                 pass
+
+        # Num Comments
+        num_reviews = driver.find_element(By.CSS_SELECTOR, '.reviews_header_count').get_attribute('innerHTML')
+        info['num_reviews'] = num_reviews[1:-1]
 
         # Comments
         reviews_list = driver.find_element(By.ID, 'taplc_location_reviews_list_resp_rr_resp_0')
@@ -256,6 +261,7 @@ def handler(event, context) -> None:
             today = datetime.today()
         today_iso = today.isocalendar()
         ids = restaurant_id_ta.split('-')
+        ta_place_id = body.get('ta_place_id', ids[0])
         # Write in a file all the data
         data_to_store = {
             'ta_restaurant': {
@@ -279,6 +285,7 @@ def handler(event, context) -> None:
                 Item={
                     'ta_place_id': {'S': ids[0]},
                     'ta_restaurant_id': {'S': ids[1]},
+                    'ta_general_place_id': {'S': ta_place_id},
                     'valid': {'S': 'no'},
                     'trip_advisor_last_time': {'S': today.strftime("%Y/%m/%d, %H:%M:%S")},
                     'google_maps_id': {'S': 'not_searched'}
