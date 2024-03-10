@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "serverless-scriptable-plugin": "^1.3.1"
+  }
+}

@@ -28,7 +28,7 @@ def handler(event, context) -> None:
         date = datetime.strptime(trip_advisor_last_time, '%Y/%m/%d, %H:%M:%S')
         date_iso = date.isocalendar()
         file_name = f"{ta_place_id}-{ta_restaurant_id}_{date.strftime('%Y_%m_%d_%H_%M_%S')}"
-        s3_key = f"raw_data/restaurants/{ta_place_id}/{ta_restaurant_id}/{date_iso.year}/{date_iso.week}/{file_name}.json"
+        s3_key = f"raw_data/restaurants/{ta_place_id}/{ta_restaurant_id}/{date.year}/{date.month}/{date.day}/{file_name}.json"
 
         # GET RESTAURANT NAME AND ADDRESS FROM S3 FILE
         logging.info(f"Getting S3 file with key: {s3_key}")
@@ -43,11 +43,12 @@ def handler(event, context) -> None:
         restaurant_address = restaurant_data.get('ta_restaurant').get('data').get('address')
 
         # Prepare request for google maps API
+        search_field = 'Restaurante ' + restaurant_name + ' Albacete España'
         fields = ["place_id", "name", "formatted_address"]
         google_maps_api_key = os.environ.get('GOOGLE_MAPS_API')
 
         url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json?"
-        url += f"input={'%20'.join(restaurant_name.split())}"
+        url += f"input={'%20'.join(search_field.split())}"
         url += f"&inputtype=textquery"
         url += f"&fields={'%2C'.join(fields)}"
         url += f"&key={google_maps_api_key}"
@@ -134,8 +135,10 @@ def handler(event, context) -> None:
                 Message=json.dumps(item)
             )
 
-        else:
+        elif len(data.get("candidates")) == 1:
             selected = data.get("candidates")[0].get("place_id")
+        else:
+            return
 
         # STORE IN RESTAURANTS DB TABLE
         logging.info("Updating restaurants table")

@@ -13,6 +13,7 @@ custom:
   defaultRegion: us-east-1
   stage: ${opt:stage, self:custom.defaultStage}
   region: ${opt:region, self:custom.defaultRegion}
+  role: arn:aws:iam::891376954408:role/LabRole
   googleMapsBucketName: ${self:service}-bucket-${self:custom.stage}
   googleMapsCandidatesDB: ${self:service}-candidates-db-${self:custom.stage}
   notifyAdminTopic: ${self:service}-notify-admin-topic-${self:custom.stage}
@@ -24,6 +25,8 @@ provider:
   runtime: python3.9
   region: ${self:custom.region}
   stage: ${self:custom.stage}
+  deploymentBucket:
+    name: tfm-deployment-bucket
   environment:
     region: ${self:custom.region}
     stage: ${self:custom.stage}
@@ -31,30 +34,46 @@ provider:
 
 functions:
   new-restaurants-to-sqs:
-    role: arn:aws:iam::992675252360:role/LabRole
+    role: ${self:custom.role}
     description: 'For each new restaurant add to queue for google maps id searching'
     handler: functions/schedule_restaurant.handler
     timeout: 900
     events:
       - schedule:
-          name: schedule-google-maps-restaurant-id-obtaining
-          description: 'Invoke lambda that adds restaurants to a queue for id obtaining'
-          rate: cron(0 12 ? * SAT *)
+          name: schedule-google-maps-restaurant-id-obtaining-ab-chinchilla
+          description: 'Invoke lambda that adds restaurants to a queue for id obtaining (Albacete-Chinchilla)'
+          rate: cron(20 4 * * ? *)
+          enabled: true
+          input:
+            trip_advisor_place_id: g1435704
+            data_to_obtain: restaurant_id
+      - schedule:
+          name: schedule-google-maps-restaurant-id-obtaining-ab
+          description: 'Invoke lambda that adds restaurants to a queue for id obtaining (Albacete-Capital)'
+          rate: cron(21 4 * * ? *)
           enabled: true
           input:
             trip_advisor_place_id: g187486
             data_to_obtain: restaurant_id
       - schedule:
-          name: schedule-google-maps-restaurant-data-obtaining
-          description: 'Invoke lambda that adds restaurants to a queue for data obtaining'
-          rate: cron(0 14 ? * SAT *)
+          name: schedule-google-maps-restaurant-data-obtaining-ab-chinchilla
+          description: 'Invoke lambda that adds restaurants to a queue for data obtaining (Albacete-Chinchilla)'
+          rate: cron(0 5 * * ? *)
+          enabled: true
+          input:
+            trip_advisor_place_id: g1435704
+            data_to_obtain: restaurant_data
+      - schedule:
+          name: schedule-google-maps-restaurant-data-obtaining-ab
+          description: 'Invoke lambda that adds restaurants to a queue for data obtaining (Albacete-Capital)'
+          rate: cron(1 5 * * ? *)
           enabled: true
           input:
             trip_advisor_place_id: g187486
             data_to_obtain: restaurant_data
 
   get-restaurant-id:
-    role: arn:aws:iam::992675252360:role/LabRole
+    role: ${self:custom.role}
     description: 'Obtains the google maps ID for a trip advisor restaurant'
     handler: functions/get_google_maps_id.handler
     environment: ${file(./env.json)}
@@ -71,7 +90,7 @@ functions:
               - Arn
 
   get-restaurant-data:
-    role: arn:aws:iam::992675252360:role/LabRole
+    role: ${self:custom.role}
     description: 'Obtains the restaurant data using google maps API'
     handler: functions/get_google_maps_data.handler
     environment: ${file(./env.json)}
@@ -133,7 +152,7 @@ resources:
       Properties:
         QueueName: ${self:custom.googleMapsQueue}
         MessageRetentionPeriod: 259200  # 3 days
-        VisibilityTimeout: 5400  # 6 times the timeout of lambda
+        VisibilityTimeout: 960  # 16 min
         RedrivePolicy:
           deadLetterTargetArn:
             Fn::GetAtt:
@@ -146,7 +165,7 @@ resources:
       Properties:
         QueueName: ${self:custom.googleMapsGetDataQueue}
         MessageRetentionPeriod: 259200  # 3 days
-        VisibilityTimeout: 5400  # 6 times the timeout of lambda
+        VisibilityTimeout: 960  # 16 min
         RedrivePolicy:
           deadLetterTargetArn:
             Fn::GetAtt:
@@ -159,3 +178,5 @@ resources:
       Properties:
         QueueName: google-maps-dead-letter-queue-${self:custom.stage}
         MessageRetentionPeriod: 518400  # 6 days
+plugins:
+  - serverless-scriptable-plugin

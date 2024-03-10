@@ -273,7 +273,7 @@ def handler(event, context) -> None:
             }
         }
         filename = f"{restaurant_id_ta}_{today.strftime('%Y_%m_%d_%H_%M_%S')}"
-        s3_path = f"raw_data/restaurants/{ids[0]}/{ids[1]}/{today_iso.year}/{today_iso.week}"
+        s3_path = f"raw_data/restaurants/{ids[0]}/{ids[1]}/{today.year}/{today.month}/{today.day}"
         store_in_s3_bucket(ta_bucket, s3_path, data_to_store, filename)
         logging.info(f"[{restaurant_id_ta}] Stored in S3")
 

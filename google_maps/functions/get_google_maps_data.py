@@ -56,7 +56,7 @@ def handler(event, context) -> None:
             return
 
         filename = f"{gm_restaurant_id}_{today.strftime('%Y_%m_%d_%H_%M_%S')}"
-        s3_path = f"raw_data/restaurants/{ta_place_id}/{ta_restaurant_id}/{date_iso.year}/{date_iso.week}"
+        s3_path = f"raw_data/restaurants/{ta_place_id}/{ta_restaurant_id}/{today.year}/{today.month}/{today.day}"
         store_in_s3_bucket(google_maps_bucket, s3_path, data, filename)
         logging.info(f"[{ta_place_id}-{ta_restaurant_id}] Stored in S3 restaurant with id {gm_restaurant_id}")
 

@@ -93,7 +93,7 @@ functions:
           name: schedule-ta-restaurant-data-obtaining
           description: 'Invoke lambda that adds each restaurant to a queue'
           rate: cron(11 1 * * ? *)
-          enabled: false
+          enabled: enable
           input:
             trip_advisor_place_id: g187486
             specific_list_date: "2024_03_07_19_00_00"
@@ -128,7 +128,7 @@ resources:
             Fn::GetAtt:
               - "TripAdvisorDeadLetterQueue"
               - "Arn"
-          maxReceiveCount: 5
+          maxReceiveCount: 9
 
     TripAdvisorDeadLetterQueue:
       Type: AWS::SQS::Queue

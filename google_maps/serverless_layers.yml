@@ -21,6 +21,8 @@ provider:
   runtime: python3.9
   region: ${self:custom.region}
   stage: ${self:custom.stage}
+  deploymentBucket:
+    name: tfm-deployment-bucket
 
 layers:
   googleMaps:
