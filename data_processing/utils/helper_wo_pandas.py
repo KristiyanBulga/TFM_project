@@ -2,6 +2,7 @@ import boto3
 import json
 import logging
 import os
+import hashlib
 from decimal import Decimal
 
 dynamodb = boto3.client('dynamodb')
@@ -12,6 +13,7 @@ buckets = {
     "trip_advisor": f'trip-advisor-{stage}',
     "google_maps": f'google-maps-bucket-{stage}'
 }
+processed_data_bucket = f"data-process-bucket-{os.environ['stage']}"
 comments_db = f"comments-db-{stage}"
 reviews_history_db = f"reviews-history-db-{stage}"
 weekly_data_db = f"list-restaurants-data-db-{stage}"
@@ -104,3 +106,14 @@ class JSONEncoder(json.JSONEncoder):
         if isinstance(obj, Decimal):
             return float(obj)
         return json.JSONEncoder.default(self, obj)
+
+
+def encode_to_hex(input_string):
+    # Create a SHA-256 hash object
+    sha256 = hashlib.sha256()
+    # Update the hash object with the input string
+    sha256.update(input_string.encode('utf-8'))
+    # Get the hexadecimal digest of the hash
+    hex_digest = sha256.hexdigest()
+    # Return the first 12 characters of the hexadecimal digest
+    return hex_digest

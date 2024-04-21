@@ -5,7 +5,7 @@ import os
 from datetime import datetime, timedelta
 from html import unescape
 from utils.helper import buckets, get_from_dynamo_with_index, store_in_s3_bucket, update_item_dynamo, comments_db, \
-    reviews_history_db
+    reviews_history_db, processed_data_bucket, encode_to_hex
 
 logging.getLogger().setLevel(logging.INFO)
 ta_day_conversion = {"lun": "lunes", "mar": "martes", "mié": "miércoles", "jue": "jueves", "vie": "viernes",
@@ -16,6 +16,8 @@ def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_resta
     restaurant_k = restaurant_data["ta_restaurant"]
     data = restaurant_k["data"]
     prices = data["price"] if data.get("price") is not None else {}
+    price_lower = prices.get("lower")
+    price_upper = prices.get("upper")
     restaurant_info = {
         "ta_restaurant_id": ta_restaurant_id,
         "added_ts": int(today.timestamp() * 100),
@@ -23,8 +25,8 @@ def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_resta
         "url": restaurant_k.get("link", ""),
         "symbol": json.dumps([s.count('€') for s in data["symbol"].split("-")] if data.get("symbol") is not None else []),
         "claimed": data.get("claimed", False),
-        "price_lower": prices.get("lower"),
-        "price_upper": prices.get("upper"),
+        "price_lower": int(price_lower) if price_lower else -1,
+        "price_upper": int(price_upper) if price_upper else -1,
         "score_overall": data.get("score_overall"),
         "score_food": data.get("score_food"),
         "score_service": data.get("score_service"),
@@ -41,11 +43,11 @@ def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_resta
         "serves_dinner": "Cenas" in data["meals"] if data.get("meals") is not None else False
     }
     if restaurant_info["price_lower"] is not None and restaurant_info["price_lower"] is not None:
-        restaurant_info["price_mean"] = restaurant_info["price_upper"] - restaurant_info["price_lower"]
+        restaurant_info["price_mean"] = int((restaurant_info["price_upper"] + restaurant_info["price_lower"])//2)
     elif restaurant_info["price_lower"] is not None:
-        restaurant_info["price_mean"] = restaurant_info["price_lower"]
+        restaurant_info["price_mean"] = int(restaurant_info["price_lower"])
     elif restaurant_info["price_upper"] is not None:
-        restaurant_info["price_mean"] = restaurant_info["price_upper"]
+        restaurant_info["price_mean"] = int(restaurant_info["price_upper"])
     else:
         restaurant_info["price_mean"] = None
     schedule = dict()
@@ -63,35 +65,44 @@ def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_resta
     # Store in a file the reviews
     reviews = data.get("reviews", [])
     logging.info(f"Found {len(reviews)} reviews for {ta_place_id}-{ta_restaurant_id}")
-    review_rates = []
+    review_rates = {}
     for review in reviews:
         date_review = datetime.strptime(review["date_review"], '%Y_%m_%d').date()
         datetime_review = datetime.combine(date_review, datetime.now().time())
         key = {
             'place': {'S': f"{ta_place_id}-{ta_restaurant_id}"},
-            'timestamp': {'N': str(int(datetime_review.timestamp() * 1000))}
+            'hash': {'S': encode_to_hex( review["title"] + review["text"])}
         }
-        upd_expr = 'SET rate = :rvw_rate, title = :rvw_title, review = :rvw_text, platform =:rvw_platform'
+        upd_expr = 'SET rate = :rvw_rate, title = :rvw_title, review = :rvw_text, platform = :rvw_platform, ts = :rvw_timestamp'
         expression_attr = {
             ':rvw_rate': {'N': str(review["rating"])},
             ':rvw_title': {'S': review["title"]},
             ':rvw_text': {'S': review["text"]},
-            ':rvw_platform': {'S': "trip_advisor"}
+            ':rvw_platform': {'S': "trip_advisor"},
+            ':rvw_timestamp': {'N': str(int(datetime_review.timestamp() * 1000))}
         }
         update_item_dynamo(comments_db, key, upd_expr, expression_attr)
-        review_rates.append(review["rating"])
-
-    today_iso = today.isocalendar()
-    key = {
-        'place': {'S': f"{ta_place_id}-{ta_restaurant_id}"},
-        'detail': {'S': f"{today_iso.year}-{today_iso.week}-trip_advisor"}
-    }
-    upd_expr = 'SET num_reviews = :rvw_num, mean_reviews = :rvw_mean'
-    expression_attr = {
-        ':rvw_num': {'N': str(len(review_rates))},
-        ':rvw_mean': {'N': str(sum(review_rates)/len(review_rates) if len(review_rates) > 0 else -1)}
-    }
-    update_item_dynamo(reviews_history_db, key, upd_expr, expression_attr)
+        day_start = (today - timedelta(weeks=1)).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        day_end = today.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        if day_start < datetime_review.timestamp() < day_end:
+            dict_key = f"{review['date_review']}"
+            if dict_key not in review_rates.keys():
+                review_rates[dict_key] = {"date": datetime_review, "reviews": []}
+            review_rates[dict_key]["reviews"].append(review["rating"])
+    for dict_key in review_rates:
+        rvw_date = review_rates[dict_key]["date"]
+        key = {
+            'place': {'S': f"{ta_place_id}-{ta_restaurant_id}"},
+            'detail': {'S': f"{rvw_date.year}-{rvw_date.month}-{rvw_date.day}-trip_advisor"}
+        }
+        upd_expr = 'SET num_reviews = :rvw_num, mean_reviews = :rvw_mean, platform = :rvw_platform, ts = :rvw_timestamp'
+        expression_attr = {
+            ':rvw_num': {'N': str(len(review_rates[dict_key]["reviews"]))},
+            ':rvw_mean': {'N': str(sum(review_rates[dict_key]["reviews"])/len(review_rates[dict_key]["reviews"]) if len(review_rates[dict_key]["reviews"]) > 0 else -1)},
+            ':rvw_platform': {'S': "trip_advisor"},
+            ':rvw_timestamp': {'N': str(int(rvw_date.timestamp() * 1000))}
+        }
+        update_item_dynamo(reviews_history_db, key, upd_expr, expression_attr)
     return restaurant_info
 
 
@@ -104,7 +115,7 @@ def _data_process_google_maps(restaurant_data: dict, ta_place_id: str, ta_restau
         "added_ts": int(today.timestamp() * 100),
         "name": data["name"],
         "url": data.get("url", ""),
-        "symbol": data.get("price_level"),
+        "symbol": float(data.get("price_level", 0.0)),
         "score_overall": data.get("rating"),
         "address": data.get("formatted_address"),
         "webpage": data.get("website"),
@@ -145,29 +156,33 @@ def _data_process_google_maps(restaurant_data: dict, ta_place_id: str, ta_restau
         timestamp = review["time"]
         key = {
             'place': {'S': f"{ta_place_id}-{ta_restaurant_id}"},
-            'timestamp': {'N': str(int(timestamp * 1000))}
+            'hash': {'S': encode_to_hex(review["text"] + str(review["time"]))}
         }
-        upd_expr = 'SET rate = :rvw_rate, review = :rvw_text, platform =:rvw_platform'
+        upd_expr = 'SET rate = :rvw_rate, review = :rvw_text, platform = :rvw_platform, ts = :rvw_timestamp'
         expression_attr = {
             ':rvw_rate': {'N': str(review["rating"])},
             ':rvw_text': {'S': review["text"]},
-            ':rvw_platform': {'S': "google_maps"}
+            ':rvw_platform': {'S': "google_maps"},
+            ':rvw_timestamp': {'N': str(int(timestamp * 1000))}
         }
         update_item_dynamo(comments_db, key, upd_expr, expression_attr)
-        if (today-timedelta(weeks=1)).timestamp() < timestamp < today.timestamp():
+        day_start = (today - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        day_end = today.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        if day_start < timestamp < day_end:
             review_rates.append(review["rating"])
-
-    today_iso = today.isocalendar()
-    key = {
-        'place': {'S': f"{ta_place_id}-{ta_restaurant_id}"},
-        'detail': {'S': f"{today_iso.year}-{today_iso.week}-google_maps"}
-    }
-    upd_expr = 'SET num_reviews = :rvw_num, mean_reviews = :rvw_mean'
-    expression_attr = {
-        ':rvw_num': {'N': str(len(review_rates))},
-        ':rvw_mean': {'N': str(sum(review_rates) / len(review_rates) if len(review_rates) > 0 else -1)}
-    }
-    update_item_dynamo(reviews_history_db, key, upd_expr, expression_attr)
+    if len(review_rates) != 0:
+        key = {
+            'place': {'S': f"{ta_place_id}-{ta_restaurant_id}"},
+            'detail': {'S': f"{today.year}-{today.month}-{today.day}-google-maps"}
+        }
+        upd_expr = 'SET num_reviews = :rvw_num, mean_reviews = :rvw_mean, platform = :rvw_platform, ts = :rvw_timestamp'
+        expression_attr = {
+            ':rvw_num': {'N': str(len(review_rates))},
+            ':rvw_mean': {'N': str(sum(review_rates)/len(review_rates) if len(review_rates) > 0 else -1)},
+            ':rvw_platform': {'S': "google_maps"},
+            ':rvw_timestamp': {'N': str(int(today.timestamp() * 1000))}
+        }
+        update_item_dynamo(reviews_history_db, key, upd_expr, expression_attr)
     return restaurant_info
 
 
@@ -185,7 +200,6 @@ def handler(event, context) -> None:
         today = datetime.strptime(event["custom_date"], "%Y_%m_%d_%H_%M_%S")
     else:
         today = datetime.today()
-    today_iso = today.isocalendar()
 
     # Get all the valid restaurants
     restaurants_db = f'restaurants-db-{os.environ["stage"]}'
@@ -201,7 +215,7 @@ def handler(event, context) -> None:
 
     bucket = buckets.get(platform, None)
     if bucket is None:
-        logging.error(f"The platform does not exist or does not have : {event}")
+        logging.error(f"The platform does not exist or it was not included : {event}")
         return
 
     # For each restaurant obtain the info and process it
@@ -209,8 +223,9 @@ def handler(event, context) -> None:
     for restaurant in list_restaurants:
         ta_restaurant_id = restaurant.get("ta_restaurant_id", {}).get("S", None)
         s3 = boto3.client('s3')
-        logging.info(f"path: raw_data/restaurants/{ta_place_id}/{ta_restaurant_id}/{today_iso.year}/{today_iso.week}/")
-        result = s3.list_objects(Bucket=bucket, Prefix=f'raw_data/restaurants/{ta_place_id}/{ta_restaurant_id}/{today_iso.year}/{today_iso.week}/')
+        path = f'raw_data/restaurants/{ta_place_id}/{ta_restaurant_id}/{today.year}/{today.month}/{today.day}/'
+        logging.info(f"path: {path}")
+        result = s3.list_objects(Bucket=bucket, Prefix=path)
         if result.get('Contents') is not None:
             first_element = result.get('Contents')[0]
             data = s3.get_object(Bucket=bucket, Key=first_element.get('Key'))
@@ -220,7 +235,7 @@ def handler(event, context) -> None:
                 restaurants_data.append(_data_process_trip_advisor(restaurant_data, ta_place_id, ta_restaurant_id, today))
             elif platform == "google_maps":
                 restaurants_data.append(_data_process_google_maps(restaurant_data, ta_place_id, ta_restaurant_id, today))
-
-    filename = f"{platform}_{today.strftime('%Y_%m_%d_%H_%M_%S')}"
-    s3_path = f"restaurants/data/ta_place_id={ta_place_id}/year={today_iso.year}/week={today_iso.week}"
-    store_in_s3_bucket(bucket, s3_path, restaurants_data, filename, extension="parquet")
+    if len(restaurants_data) != 0:
+        filename = f"{platform}_{today.strftime('%Y_%m_%d_%H_%M_%S')}"
+        s3_path = f"restaurants/platform={platform}/ta_place_id={ta_place_id}/year={today.year}/month={today.month}/day={today.day}"
+        store_in_s3_bucket(processed_data_bucket, s3_path, restaurants_data, filename, extension="parquet")
