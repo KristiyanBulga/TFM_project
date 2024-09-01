@@ -91,19 +91,29 @@ resources:
             AttributeType: S
           - AttributeName: hash
             AttributeType: S
-          - AttributeName: timestamp
+          - AttributeName: ts
             AttributeType: N
+          - AttributeName: sentiment
+            AttributeType: S
         KeySchema:
           - KeyType: HASH
             AttributeName: place
           - KeyType: RANGE
             AttributeName: hash
         GlobalSecondaryIndexes:
-          - IndexName: CommentsByPlace
+          - IndexName: PlaceByTs
             KeySchema:
               - AttributeName: place
                 KeyType: HASH
-              - AttributeName: timestamp
+              - AttributeName: ts
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: SentimentIndex
+            KeySchema:
+              - AttributeName: place
+                KeyType: HASH
+              - AttributeName: sentiment
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL

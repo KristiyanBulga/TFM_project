@@ -10,9 +10,9 @@ package:
     - 'functions/api_restaurant_data.py'
     - 'functions/api_notification_configs.py'
     - 'functions/api_restaurant_reviews.py'
-    - 'functions/api_weekly_query.py'
-    - 'functions/update_weekly_data.py'
-    - 'functions/create_weekly_query.py'
+    - 'functions/api_daily_query.py'
+    - 'functions/update_daily_data.py'
+    - 'functions/create_daily_query.py'
     - 'utils/helper_wo_pandas.py'
 
 custom:
@@ -23,12 +23,16 @@ custom:
   listRestaurantsDataDB: list-restaurants-data-db-${self:custom.stage}
   notificationConfigsDB: notification-configs-db-${self:custom.stage}
   notificationsDB: notifications-db-${self:custom.stage}
+  reviesStatisticsDB: reviews-statistics-db-${self:custom.stage}
+  role: arn:aws:iam::891376954408:role/LabRole
 
 provider:
   name: aws
   runtime: python3.9
   region: ${self:custom.region}
   stage: ${self:custom.stage}
+  deploymentBucket:
+    name: tfm-deployment-bucket
   environment:
     region: ${self:custom.region}
     stage: ${self:custom.stage}
@@ -38,36 +42,43 @@ provider:
         description: Api key to obtain restaurant data
 
 functions:
-  update-weekly-data:
-    role: arn:aws:iam::992675252360:role/LabRole
-    description: 'Create the weekly query per place id'
-    handler: functions/update_weekly_data.handler
+  update-daily-data:
+    role: ${self:custom.role}
+    description: 'Update daily data in dynamo'
+    handler: functions/update_daily_data.handler
     timeout: 900
     events:
+      # - schedule:
+      #     name: schedule-daily-data-update-ab-chinchilla
+      #     description: 'Invoke lambda that updates the daily data in dynamodb Albacete-Chinchilla'
+      #     rate: cron(40 5 * * ? *)
+      #     enabled: true
+      #     input:
+      #       trip_advisor_place_id: g1435704
       - schedule:
-          name: schedule-weekly-data-update
-          description: 'Invoke lambda that updates the weekly data in dynamodb Albacete'
-          rate: cron(0 5 ? * SUN *)
+          name: schedule-daily-data-update-ab
+          description: 'Invoke lambda that updates the daily data in dynamodb Albacete'
+          rate: cron(41 5 * * ? *)
           enabled: true
           input:
             trip_advisor_place_id: g187486
 
-  create-weekly-query:
-    role: arn:aws:iam::992675252360:role/LabRole
-    description: 'Create the weekly query per place id'
-    handler: functions/create_weekly_query.handler
+  create-daily-query:
+    role: ${self:custom.role}
+    description: 'Create the daily query per place id'
+    handler: functions/create_daily_query.handler
     timeout: 900
     events:
       - schedule:
-          name: schedule-creation-weekly-query
-          description: 'Invoke lambda that creates the weekly query for Albacete'
-          rate: cron(0 7 ? * SUN *)
+          name: schedule-creation-daily-query
+          description: 'Invoke lambda that creates the daily query for Albacete'
+          rate: cron(50 5 * * ? *)
           enabled: true
           input:
             trip_advisor_place_id: g187486
 
   create-user-notifications:
-    role: arn:aws:iam::992675252360:role/LabRole
+    role: ${self:custom.role}
     description: 'Create user notifications based on configurations'
     handler: functions/add_notifications.handler
     timeout: 900
@@ -76,10 +87,10 @@ functions:
           name: schedule-user-notifications
           description: 'Invoke lambda that creates notifications'
           rate: cron(0 8 ? * SUN *)
-          enabled: true
+          enabled: false
 
   create-admin-notifications:
-    role: arn:aws:iam::992675252360:role/LabRole
+    role: ${self:custom.role}
     description: 'Create admin notifications based on configurations'
     handler: functions/add_notifications.handler_admin
     timeout: 900
@@ -88,11 +99,11 @@ functions:
           name: schedule-admin-notifications
           description: 'Invoke lambda that creates admin notifications'
           rate: cron(0 9 ? * SUN *)
-          enabled: true
+          enabled: false
 
 
   api:
-    role: arn:aws:iam::992675252360:role/LabRole
+    role: ${self:custom.role}
     description: 'Router to all endpoints'
     handler: functions/api.router
     events:
@@ -118,6 +129,14 @@ functions:
           cors: true
       - http:
           path: /reviews/historical
+          method: post
+          cors: true
+      - http:
+          path: /reviews/stats
+          method: post
+          cors: true
+      - http:
+          path: /reviews/between
           method: post
           cors: true
       - http:
@@ -186,4 +205,19 @@ resources:
             AttributeName: username
           - KeyType: RANGE
             AttributeName: timestamp
+        BillingMode: PAY_PER_REQUEST
+    ReviewsStatistics:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.reviesStatisticsDB}
+        AttributeDefinitions:
+          - AttributeName: ta_place_id
+            AttributeType: S
+          - AttributeName: ta_restaurant_id
+            AttributeType: S
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: ta_place_id
+          - KeyType: RANGE
+            AttributeName: ta_restaurant_id
         BillingMode: PAY_PER_REQUEST

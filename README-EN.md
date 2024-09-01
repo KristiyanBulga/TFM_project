@@ -50,7 +50,7 @@ the Dockerfile as many dependencies are needed to execute the functions. The fun
 can be compared.
 
 The other part focuses on creating an API and preparing the data for this API. The functions are:
-* **update_weekly_data.py** and **create_weekly_query.py**: The first one is responsible for updating the latest data for 
+* **update_daily_data.py** and **create_daily_query.py**: The first one is responsible for updating the latest data for 
 each restaurant in a table. The second is responsible for retrieving the data from this table and creating a file 
 containing the result of the most used API request to speed up the data retrieval process for the API.
 * **api.pi**: This function is responsible for detecting which API endpoint the request was made to, and is responsible 

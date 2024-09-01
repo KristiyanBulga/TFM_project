@@ -12,24 +12,27 @@ athena_databases = {
     "trip_advisor": "trip_advisor_database",
     "google_maps": "google_maps_database"
 }
+athena_tables = {
+    "trip_advisor": "platform_trip_advisor",
+    "google_maps": "platform_google_maps",
+}
 client = boto3.client('athena')
-queries_bucket = "s3://trip-advisor-dev/queries"
+queries_bucket = "s3://data-process-bucket-dev/queries"
 query_columns = {
     "trip_advisor": ["ta_restaurant_id", "name", "symbol", "score_overall", "travellers_choice", "serves_breakfast",
-                     "serves_brunch", "serves_lunch", "serves_dinner", "tags"],
+                     "serves_brunch", "serves_lunch", "serves_dinner", "tags", "added_ts"],
     "google_maps": ["ta_restaurant_id", "symbol", "score_overall", "serves_lunch", "serves_dinner", "serves_beer",
                     "serves_vegetarian_food", "serves_wine", "takeout", "wheelchair_accessible_entrance", "dine_in",
-                    "delivery", "reservable"]
+                    "delivery", "reservable", "added_ts", "location"]
 }
 
 
 def _get_new_weekly_data(today: datetime, platform: str, ta_place_id: str):
-    today_iso = today.isocalendar()
-
     # Get processed data from athena
     query_columns_str = '"' + '", "'.join(query_columns[platform]) + '"'
     query_trip_advisor = client.start_query_execution(
-        QueryString=f"SELECT {query_columns_str} FROM data where year = '{today_iso.year}' and week = '{today_iso.week}'",
+        # QueryString=f"SELECT {query_columns_str} FROM data where year = '{today_iso.year}' and week = '{today_iso.week}'",
+        QueryString=f"SELECT * FROM ( SELECT  {query_columns_str}, ROW_NUMBER() OVER ( PARTITION BY ta_restaurant_id ORDER BY added_ts DESC ) AS row_num FROM {athena_tables.get(platform)} WHERE ta_place_id = '{ta_place_id}' ) AS aux_table WHERE aux_table.row_num = 1;",
         QueryExecutionContext={
             'Database': athena_databases.get(platform)
         },
@@ -70,13 +73,13 @@ def _get_new_weekly_data(today: datetime, platform: str, ta_place_id: str):
                 ":ta_serves_lunch": {'BOOL': parse_athena_boolean(data[7].get("VarCharValue", "false"))},
                 ":ta_serves_dinner": {'BOOL': parse_athena_boolean(data[8].get("VarCharValue", "false"))},
                 ":ta_tags": {'S': data[9].get("VarCharValue", "{}")},
-                ":ta_date": {'S': today.strftime("%Y/%m/%d, %H:%M:%S")}
+                ":ta_added": {'N': str(data[10].get("VarCharValue", "-1"))},
             }
             upd_expr = 'SET restaurant_name = :restaurant_name, ta_symbol = :ta_symbol, ' + \
                        'ta_score_overall = :ta_score_overall, ta_travellers_choice = :ta_travellers_choice, ' + \
                        'ta_serves_breakfast = :ta_serves_breakfast, ta_serves_brunch = :ta_serves_brunch, ' + \
                        'ta_serves_lunch = :ta_serves_lunch, ta_serves_dinner = :ta_serves_dinner, ' + \
-                       'ta_tags = :ta_tags, ta_date = :ta_date'
+                       'ta_tags = :ta_tags, ta_added = :ta_added'
         elif platform == "google_maps":
             expression_attr = {
                 ":gm_symbol": {'N': data[1].get("VarCharValue", "-1")},
@@ -91,7 +94,8 @@ def _get_new_weekly_data(today: datetime, platform: str, ta_place_id: str):
                 ":gm_dine_in": {'BOOL': parse_athena_boolean(data[10].get("VarCharValue", "false"))},
                 ":gm_deliver": {'BOOL': parse_athena_boolean(data[11].get("VarCharValue", "false"))},
                 ":gm_reservable": {'BOOL': parse_athena_boolean(data[12].get("VarCharValue", "false"))},
-                ":gm_date": {'S': today.strftime("%Y/%m/%d, %H:%M:%S")}
+                ":gm_added": {'N': str(data[13].get("VarCharValue", "-1"))},
+                ":location": {'S': json.dumps(data[14].get("VarCharValue", {}))}
             }
             upd_expr = 'SET gm_symbol = :gm_symbol, gm_score_overall = :gm_score_overall, ' + \
                        'gm_serves_lunch = :gm_serves_lunch, gm_serves_dinner = :gm_serves_dinner, ' + \
@@ -99,7 +103,7 @@ def _get_new_weekly_data(today: datetime, platform: str, ta_place_id: str):
                        'gm_serves_wine = :gm_serves_wine, gm_takeout = :gm_takeout, ' + \
                        'gm_wheelchair_accessible_entrance = :gm_wheelchair_accessible_entrance, ' + \
                        'gm_dine_in = :gm_dine_in, gm_deliver = :gm_deliver, gm_reservable = :gm_reservable, ' \
-                       'gm_date = :gm_date'
+                       'gm_added = :gm_added, place_location = :location'
 
         key = {
             'ta_place_id': {'S': ta_place_id},
@@ -122,3 +126,6 @@ def handler(event, context) -> None:
 
     _get_new_weekly_data(today, "trip_advisor", ta_place_id)
     _get_new_weekly_data(today, "google_maps", ta_place_id)
+    if ta_place_id == "g187486":
+        _get_new_weekly_data(today, "trip_advisor", "g1435704")
+        _get_new_weekly_data(today, "google_maps", "g1435704")

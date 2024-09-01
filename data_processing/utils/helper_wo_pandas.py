@@ -11,11 +11,13 @@ region = os.environ['region']
 stage = os.environ['stage']
 buckets = {
     "trip_advisor": f'trip-advisor-{stage}',
-    "google_maps": f'google-maps-bucket-{stage}'
+    "google_maps": f'google-maps-bucket-{stage}',
+    "processed_data": f'data-process-bucket-{stage}'
 }
 processed_data_bucket = f"data-process-bucket-{os.environ['stage']}"
 comments_db = f"comments-db-{stage}"
 reviews_history_db = f"reviews-history-db-{stage}"
+reviews_statistics_db = f"reviews-statistics-db-{stage}"
 weekly_data_db = f"list-restaurants-data-db-{stage}"
 notif_configs_db = f"notification-configs-db-{stage}"
 notifs_db = f"notifications-db-{stage}"
@@ -36,6 +38,26 @@ def get_from_dynamo_with_index(table_name: str, index_name: str, key_cond_expr: 
         IndexName=index_name,
         KeyConditionExpression=key_cond_expr,
         ExpressionAttributeValues=expr_attr
+    )
+    return response.get('Items')
+
+def get_from_dynamo_with_index_with_limit(table_name: str, index_name: str, key_cond_expr: str, expr_names: dict, expr_attr: dict, limit: int) -> list:
+    """
+    This function makes a query to the dynamoDB using the params
+    :param table_name: name of the dynamoDB table
+    :param index_name: name of the index
+    :param key_cond_expr: the condition
+    :param expr_attr: values for the condition expression
+    :return: the list of items from dynamoDB
+    """
+    response = dynamodb.query(
+        TableName=table_name,
+        IndexName=index_name,
+        KeyConditionExpression=key_cond_expr,
+        ExpressionAttributeNames=expr_names,
+        ExpressionAttributeValues=expr_attr,
+        ScanIndexForward=False,
+        Limit=limit
     )
     return response.get('Items')
 

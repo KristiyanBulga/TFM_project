@@ -52,7 +52,7 @@ es:
 comparados.
 
 La otra parte se centra en la creación de una API y en la preparación de los datos para esta API. Las funciones son:
-* **update_weekly_data.py** y **create_weekly_query.py**: La primera se encarga de actualizar los datos más recientes de 
+* **update_daily_data.py** y **create_daily_query.py**: La primera se encarga de actualizar los datos más recientes de 
 cada restaurante en una tabla. La segunda se encarga de recoger los datos de esta tabla y crear un fichero con la 
 el resultado de la petición de la API más usada, de esta manera se agiliza el proceso de obtención de los datos.
 * **api.pi**: Esta función se encarga de detectar a que endpoint de la API se ha realizado la petición y se encarga de 

@@ -5,7 +5,7 @@ import os
 from datetime import datetime, timedelta
 from html import unescape
 from utils.helper import buckets, get_from_dynamo_with_index, store_in_s3_bucket, update_item_dynamo, comments_db, \
-    reviews_history_db, processed_data_bucket, encode_to_hex
+    reviews_history_db, processed_data_bucket, encode_to_hex, reviews_statistics_db, get_from_dynamo, update_item_dynamo
 
 logging.getLogger().setLevel(logging.INFO)
 ta_day_conversion = {"lun": "lunes", "mar": "martes", "mié": "miércoles", "jue": "jueves", "vie": "viernes",
@@ -20,7 +20,7 @@ def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_resta
     price_upper = prices.get("upper")
     restaurant_info = {
         "ta_restaurant_id": ta_restaurant_id,
-        "added_ts": int(today.timestamp() * 100),
+        "added_ts": int(today.timestamp() * 1000),
         "name": unescape(restaurant_k.get("name", "")),
         "url": restaurant_k.get("link", ""),
         "symbol": json.dumps([s.count('€') for s in data["symbol"].split("-")] if data.get("symbol") is not None else []),
@@ -66,6 +66,7 @@ def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_resta
     reviews = data.get("reviews", [])
     logging.info(f"Found {len(reviews)} reviews for {ta_place_id}-{ta_restaurant_id}")
     review_rates = {}
+    rates = {"real": {"trip_advisor": {str(n): 0 for n in range(1,6)}, "google_maps": {str(n): 0 for n in range(1,6)}}, "ai": {"trip_advisor": {str(n): 0 for n in range(1,6)}, "google_maps": {str(n): 0 for n in range(1,6)}}}
     for review in reviews:
         date_review = datetime.strptime(review["date_review"], '%Y_%m_%d').date()
         datetime_review = datetime.combine(date_review, datetime.now().time())
@@ -82,13 +83,14 @@ def _data_process_trip_advisor(restaurant_data: dict, ta_place_id: str, ta_resta
             ':rvw_timestamp': {'N': str(int(datetime_review.timestamp() * 1000))}
         }
         update_item_dynamo(comments_db, key, upd_expr, expression_attr)
-        day_start = (today - timedelta(weeks=1)).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        day_start = (today - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
         day_end = today.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
         if day_start < datetime_review.timestamp() < day_end:
             dict_key = f"{review['date_review']}"
             if dict_key not in review_rates.keys():
                 review_rates[dict_key] = {"date": datetime_review, "reviews": []}
             review_rates[dict_key]["reviews"].append(review["rating"])
+            rates['real']["trip_advisor"][str(review["rating"])] += 1
     for dict_key in review_rates:
         rvw_date = review_rates[dict_key]["date"]
         key = {
@@ -112,7 +114,7 @@ def _data_process_google_maps(restaurant_data: dict, ta_place_id: str, ta_restau
     restaurant_info = {
         "ta_restaurant_id": ta_restaurant_id,
         "gm_place_id": data.get("place_id"),
-        "added_ts": int(today.timestamp() * 100),
+        "added_ts": int(today.timestamp() * 1000),
         "name": data["name"],
         "url": data.get("url", ""),
         "symbol": float(data.get("price_level", 0.0)),
@@ -130,7 +132,9 @@ def _data_process_google_maps(restaurant_data: dict, ta_place_id: str, ta_restau
         "wheelchair_accessible_entrance": data.get("wheelchair_accessible_entrance", False),
         "dine_in": data.get("dine_in", False),
         "delivery": data.get("delivery", False),
-        "reservable": data.get("delivery", False),
+        "reservable": data.get("reservable", False),
+        "photos": [],
+        "location": data.get("geometry").get("location")
     }
 
     schedule = dict()
@@ -148,10 +152,21 @@ def _data_process_google_maps(restaurant_data: dict, ta_place_id: str, ta_restau
         schedule[day] = list_hours
     restaurant_info["schedule"] = json.dumps(schedule)
 
+    # Process photos
+    # photos = []
+    # for photo in data.get("photos", []):
+    #     photoData = {
+    #         "height": photo.get("height"),
+    #         "width": photo.get("width"),
+    #         "height": photo.get("height"),
+    #         "height": photo.get("height")
+    #     }
+
     # Store in a file the reviews
     reviews = data.get("reviews", [])
     logging.info(f"Found {len(reviews)} reviews for {ta_place_id}-{ta_restaurant_id}")
     review_rates = []
+    rates = {"real": {"trip_advisor": {str(n): 0 for n in range(1,6)}, "google_maps": {str(n): 0 for n in range(1,6)}}, "ai": {"trip_advisor": {str(n): 0 for n in range(1,6)}, "google_maps": {str(n): 0 for n in range(1,6)}}}
     for review in reviews:
         timestamp = review["time"]
         key = {
@@ -170,19 +185,64 @@ def _data_process_google_maps(restaurant_data: dict, ta_place_id: str, ta_restau
         day_end = today.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
         if day_start < timestamp < day_end:
             review_rates.append(review["rating"])
-    if len(review_rates) != 0:
+            rates['real']["google_maps"][str(review["rating"])] += 1
+    if len(review_rates) != 0:  # HISTORY REVIEWS
+        gm_mean = sum(review_rates)/len(review_rates)
+        gm_count = len(review_rates)
         key = {
             'place': {'S': f"{ta_place_id}-{ta_restaurant_id}"},
             'detail': {'S': f"{today.year}-{today.month}-{today.day}-google-maps"}
         }
         upd_expr = 'SET num_reviews = :rvw_num, mean_reviews = :rvw_mean, platform = :rvw_platform, ts = :rvw_timestamp'
         expression_attr = {
-            ':rvw_num': {'N': str(len(review_rates))},
-            ':rvw_mean': {'N': str(sum(review_rates)/len(review_rates) if len(review_rates) > 0 else -1)},
+            ':rvw_num': {'N': str(gm_count)},
+            ':rvw_mean': {'N': str(gm_mean)},
             ':rvw_platform': {'S': "google_maps"},
-            ':rvw_timestamp': {'N': str(int(today.timestamp() * 1000))}
+            ':rvw_timestamp': {'N': str(int((today - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000))}
         }
         update_item_dynamo(reviews_history_db, key, upd_expr, expression_attr)
+        # UPDATE statistics
+        key_cond_expr = "#place = :place_id and #restaurant = :restaurant_id"
+        expr_names = {
+            "#place": "ta_place_id",
+            "#restaurant": "ta_restaurant_id"
+        }
+        expr_attr = {
+            ":place_id": {
+                "S": ta_place_id},
+            ":restaurant_id": {
+                "S": ta_restaurant_id},
+        }
+        history = get_from_dynamo(reviews_statistics_db, key_cond_expr, expr_names, expr_attr)
+
+        db_ta_mean, db_ta_count, db_gm_mean, db_gm_count = 0, 0, 0, 0
+        if history:
+            db_ta_mean = float(history[0]["ta_mean"]["N"])
+            db_ta_count = int(history[0]["ta_count"]["N"])
+            db_gm_mean = float(history[0]["gm_mean"]["N"])
+            db_gm_count = int(history[0]["gm_count"]["N"])
+            saved_rates = json.loads(history[0].get("rates", {}).get("S", "{}"))
+            for platform in ["trip_advisor", "google_maps"]:
+                for state in ["real", "ai"]:
+                    for n in range(1,6):
+                        rates[state][platform][str(n)] += saved_rates.get(state, {}).get(platform,{}).get(str(n), 0)
+
+        db_gm_mean = (db_gm_mean * db_gm_count + gm_mean * gm_count) / ((db_gm_count + gm_count) if db_gm_count + gm_count else 1)
+        db_gm_count += gm_count
+
+        key = {
+            'ta_place_id': {'S': ta_place_id},
+            'ta_restaurant_id': {'S': ta_restaurant_id}
+        }
+        upd_expr = 'SET ta_mean = :ta_mean, ta_count = :ta_count, gm_mean = :gm_mean, gm_count = :gm_count, rates = :rates'
+        expression_attr = {
+            ':ta_mean': {'N': str(db_ta_mean)},
+            ':ta_count': {'N': str(db_ta_count)},
+            ':gm_mean': {'N': str(db_gm_mean)},
+            ':gm_count': {'N': str(db_gm_count)},
+            ':rates': {"S": json.dumps(rates)}
+        }
+        update_item_dynamo(reviews_statistics_db, key, upd_expr, expression_attr)
     return restaurant_info
 
 
